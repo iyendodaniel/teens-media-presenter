@@ -15,6 +15,28 @@ export type Translation = "WEB" | "KJV" | "ASV";
 
 export type MediaFitMode = "fit" | "fill" | "center";
 
+export type ScriptureFontKey = "sans" | "serif" | "elegant" | "display";
+
+export const SCRIPTURE_FONTS: { key: ScriptureFontKey; label: string; family: string }[] = [
+  { key: "sans", label: "Sans", family: "'Barlow', ui-sans-serif, system-ui, sans-serif" },
+  { key: "serif", label: "Serif", family: "'Lora', Georgia, 'Times New Roman', serif" },
+  {
+    key: "elegant",
+    label: "Elegant",
+    family: "'Cormorant Garamond', Georgia, 'Times New Roman', serif",
+  },
+  { key: "display", label: "Bold", family: "'Bebas Neue', 'Barlow', sans-serif" },
+];
+
+export const DEFAULT_FONT_KEY: ScriptureFontKey = "sans";
+export const DEFAULT_FONT_SCALE = 1;
+export const MIN_FONT_SCALE = 0.6;
+export const MAX_FONT_SCALE = 1.8;
+
+export function fontFamilyFor(key: ScriptureFontKey | undefined): string {
+  return SCRIPTURE_FONTS.find((f) => f.key === key)?.family ?? SCRIPTURE_FONTS[0]!.family;
+}
+
 export type LiveState =
   | { mode: "blank"; revision: number }
   | { mode: "black"; revision: number }
@@ -52,6 +74,10 @@ export type LiveState =
       translation: Translation;
       /** Optional background image behind the verse text. */
       background?: { mediaId: string; src?: string | undefined } | undefined;
+      /** Multiplier applied to the auto-fit verse font size. Defaults to 1. */
+      fontScale?: number | undefined;
+      /** Which of SCRIPTURE_FONTS to render the verse text in. Defaults to "sans". */
+      fontFamily?: ScriptureFontKey | undefined;
     };
 
 export type SyncMessage =

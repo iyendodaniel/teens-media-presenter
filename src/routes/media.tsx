@@ -35,7 +35,7 @@ import { MediaStage, fitClass } from "@/components/media/media-stage";
 import { createLinkedItem, formatDuration, searchMedia, type MediaItem } from "@/lib/media-library";
 import { parseOrderOfService } from "@/lib/order-of-service";
 import type { FolderEntry } from "@/lib/media-folder";
-import type { LiveState, MediaFitMode } from "@/lib/presenter-sync";
+import { fontFamilyFor, type LiveState, type MediaFitMode } from "@/lib/presenter-sync";
 
 export const Route = createFileRoute("/media")({
   head: () => ({
@@ -367,11 +367,19 @@ function MediaPanel() {
 
   const liveMediaId = live.mode === "image" || live.mode === "video" ? live.mediaId : null;
 
+  // Bible background images live in their own dedicated collection (managed
+  // from the scripture control panel) and are kept out of the general Media
+  // library grid/search/tabs so they don't clutter regular media browsing.
+  const generalItems = useMemo(
+    () => library.items.filter((i) => i.collection !== "background"),
+    [library.items],
+  );
+
   /* --- filtering: synchronous, every keystroke -------------------------- */
-  const results = useMemo(() => searchMedia(library.items, query), [library.items, query]);
+  const results = useMemo(() => searchMedia(generalItems, query), [generalItems, query]);
 
   const visible = useMemo(() => {
-    const items = [...library.items];
+    const items = [...generalItems];
     if (tab === "images") return items.filter((i) => i.kind !== "video");
     if (tab === "videos") return items.filter((i) => i.kind === "video");
     if (tab === "favorites") return items.filter((i) => i.favorite);
@@ -380,15 +388,15 @@ function MediaPanel() {
         .filter((i) => i.lastUsedAt)
         .sort((a, b) => (b.lastUsedAt ?? 0) - (a.lastUsedAt ?? 0));
     return items.sort((a, b) => (b.lastUsedAt ?? b.addedAt) - (a.lastUsedAt ?? a.addedAt));
-  }, [library.items, tab]);
+  }, [generalItems, tab]);
 
   const recent = useMemo(
     () =>
-      library.items
+      generalItems
         .filter((i) => i.lastUsedAt)
         .sort((a, b) => (b.lastUsedAt ?? 0) - (a.lastUsedAt ?? 0))
         .slice(0, 4),
-    [library.items],
+    [generalItems],
   );
 
   useEffect(() => setActiveIndex(0), [query]);
@@ -1441,7 +1449,12 @@ function LiveMirror({
             <div className="absolute inset-0 bg-black/55" />
           </>
         ) : null}
-        <p className="relative z-10 line-clamp-4 text-sm text-foreground">{live.text}</p>
+        <p
+          className="relative z-10 line-clamp-4 text-sm text-foreground"
+          style={{ fontFamily: fontFamilyFor(live.fontFamily) }}
+        >
+          {live.text}
+        </p>
         <p className="relative z-10 font-display text-accent">{live.reference}</p>
       </div>
     );

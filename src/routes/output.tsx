@@ -2,6 +2,8 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useOutput } from "@/hooks/use-presenter-sync";
 import { MediaStage } from "@/components/media/media-stage";
 import { useResolvedUrl } from "@/hooks/use-media-library";
+import { DEFAULT_FONT_SCALE, fontFamilyFor } from "@/lib/presenter-sync";
+import { verseFontSize } from "@/lib/verse-font-size";
 
 export const Route = createFileRoute("/output")({
   head: () => ({
@@ -9,19 +11,6 @@ export const Route = createFileRoute("/output")({
   }),
   component: OutputPage,
 });
-
-/**
- * Continuous font-size scaling so long verses still fit on screen and short
- * ones still read big at the back of the room. clamp() keeps it fluid across
- * projector resolutions without a hard breakpoint list.
- */
-function verseFontSize(length: number): string {
-  if (length <= 60) return "clamp(2.75rem, 3vw + 2.75rem, 7rem)";
-  if (length <= 120) return "clamp(2.25rem, 2.4vw + 2rem, 5.5rem)";
-  if (length <= 220) return "clamp(1.85rem, 1.8vw + 1.5rem, 4.25rem)";
-  if (length <= 340) return "clamp(1.5rem, 1.3vw + 1.2rem, 3.25rem)";
-  return "clamp(1.25rem, 1vw + 1rem, 2.5rem)";
-}
 
 function OutputPage() {
   const live = useOutput();
@@ -55,8 +44,11 @@ function OutputPage() {
           ) : null}
           <div className="relative z-10 flex flex-col items-center gap-10">
             <p
-              className="max-w-[86vw] font-sans font-medium leading-[1.35] text-foreground"
-              style={{ fontSize: verseFontSize(live.text.length) }}
+              className="max-w-[86vw] font-medium leading-[1.35] text-foreground"
+              style={{
+                fontSize: verseFontSize(live.text.length, live.fontScale ?? DEFAULT_FONT_SCALE),
+                fontFamily: fontFamilyFor(live.fontFamily),
+              }}
             >
               {live.text}
             </p>

@@ -34,6 +34,12 @@ export type MediaItem = {
    * <iframe> instead of a <video> tag (see MediaStage).
    */
   embed?: boolean | undefined;
+  /**
+   * "background" items live in their own dedicated Bible Background picker
+   * (scripture control panel) and are kept out of the general Media library
+   * grid/search/tabs. Undefined means "regular media item".
+   */
+  collection?: "background" | undefined;
 };
 
 const ITEMS_KEY = "tmp.media.items";
@@ -194,7 +200,7 @@ async function videoMeta(
   });
 }
 
-export async function importFile(file: File): Promise<MediaItem | null> {
+export async function importFile(file: File, collection?: "background"): Promise<MediaItem | null> {
   const kind = kindForFile(file);
   if (!kind) return null;
   const id = newId();
@@ -205,6 +211,7 @@ export async function importFile(file: File): Promise<MediaItem | null> {
     kind,
     source: "imported",
     addedAt: Date.now(),
+    collection,
   };
   if (kind === "video") {
     const url = URL.createObjectURL(file);
@@ -245,7 +252,11 @@ function hostname(url: string): string {
  * When the file type can't be inferred from the URL, returns "ambiguous" so
  * the caller can ask the operator whether it's an image or a video.
  */
-export function createLinkedItem(rawUrl: string, kindHint?: "image" | "video"): LinkedMediaResult {
+export function createLinkedItem(
+  rawUrl: string,
+  kindHint?: "image" | "video",
+  collection?: "background",
+): LinkedMediaResult {
   const url = rawUrl.trim();
   if (!url) return { ok: false, reason: "Enter a URL first." };
   let parsed: URL;
@@ -270,6 +281,7 @@ export function createLinkedItem(rawUrl: string, kindHint?: "image" | "video"): 
         url: `https://www.youtube.com/embed/${youtube[1]}?autoplay=1&rel=0`,
         embed: true,
         addedAt: Date.now(),
+        collection,
       },
     };
   }
@@ -286,6 +298,7 @@ export function createLinkedItem(rawUrl: string, kindHint?: "image" | "video"): 
         url: `https://player.vimeo.com/video/${vimeo[1]}?autoplay=1`,
         embed: true,
         addedAt: Date.now(),
+        collection,
       },
     };
   }
@@ -308,6 +321,7 @@ export function createLinkedItem(rawUrl: string, kindHint?: "image" | "video"): 
       source: "linked",
       url,
       addedAt: Date.now(),
+      collection,
     },
   };
 }

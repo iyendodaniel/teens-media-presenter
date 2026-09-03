@@ -27,14 +27,14 @@ export function useMediaLibrary() {
     saveItems(next);
   }, []);
 
-  const importFiles = useCallback(async (files: FileList | File[]) => {
+  const importFiles = useCallback(async (files: FileList | File[], collection?: "background") => {
     const accepted = [...files].filter((f) => kindForFile(f));
     if (accepted.length === 0) return [] as MediaItem[];
     setImporting((n) => n + accepted.length);
     const created: MediaItem[] = [];
     for (const file of accepted) {
       try {
-        const item = await importFile(file);
+        const item = await importFile(file, collection);
         if (item) {
           created.push(item);
           // Append incrementally so the grid fills in while the rest decode.

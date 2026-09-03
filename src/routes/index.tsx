@@ -1,9 +1,19 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { ChevronLeft, CornerDownLeft, Image as ImageIcon, Search, X } from "lucide-react";
+import { ChevronLeft, CornerDownLeft, Image as ImageIcon, Plus, Search, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useController } from "@/hooks/use-presenter-sync";
-import type { LiveState, Translation } from "@/lib/presenter-sync";
+import {
+  DEFAULT_FONT_KEY,
+  DEFAULT_FONT_SCALE,
+  MAX_FONT_SCALE,
+  MIN_FONT_SCALE,
+  SCRIPTURE_FONTS,
+  fontFamilyFor,
+  type LiveState,
+  type ScriptureFontKey,
+  type Translation,
+} from "@/lib/presenter-sync";
 import {
   BOOK_META,
   TRANSLATIONS,
@@ -15,7 +25,9 @@ import {
 } from "@/lib/scriptures";
 import { buildSuggestions, type Suggestion } from "@/lib/search-suggestions";
 import { useMediaLibrary, useMediaUrl, useResolvedUrl } from "@/hooks/use-media-library";
+import { MediaStage } from "@/components/media/media-stage";
 import type { MediaItem } from "@/lib/media-library";
+import { previewVerseFontSize } from "@/lib/verse-font-size";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -39,17 +51,23 @@ export const Route = createFileRoute("/")({
   component: ControlPanel,
 });
 
-function previewFontSize(length: number): string {
-  if (length <= 60) return "clamp(0.9rem, 3.6cqw, 1.9rem)";
-  if (length <= 120) return "clamp(0.8rem, 2.9cqw, 1.5rem)";
-  if (length <= 220) return "clamp(0.7rem, 2.3cqw, 1.2rem)";
-  if (length <= 340) return "clamp(0.62rem, 1.9cqw, 1rem)";
-  return "clamp(0.55rem, 1.5cqw, 0.85rem)";
-}
-
+/**
+ * Mirrors whatever is actually live on the Output window — scripture, image,
+ * video, black or blank — regardless of which control panel (scripture or
+ * media) is currently open. There is only ever one Live on Output; this
+ * preview must never go stale just because the operator switched sections.
+ */
 function PreviewStage({ live }: { live: LiveState }) {
   const background = live.mode === "scripture" ? live.background : undefined;
   const backgroundUrl = useResolvedUrl(background?.mediaId, background?.src);
+
+  if (live.mode === "image" || live.mode === "video") {
+    return (
+      <div className="relative aspect-video w-full overflow-hidden rounded-lg bg-stage shadow-stage">
+        <MediaStage state={live} forceMuted />
+      </div>
+    );
+  }
 
   return (
     <div
@@ -73,8 +91,14 @@ function PreviewStage({ live }: { live: LiveState }) {
           ) : null}
           <div className="relative z-10 flex flex-col items-center gap-[3cqw]">
             <p
-              className="max-w-[92%] font-sans font-medium leading-[1.35] text-foreground"
-              style={{ fontSize: previewFontSize(live.text.length) }}
+              className="max-w-[92%] font-medium leading-[1.35] text-foreground"
+              style={{
+                fontSize: previewVerseFontSize(
+                  live.text.length,
+                  live.fontScale ?? DEFAULT_FONT_SCALE,
+                ),
+                fontFamily: fontFamilyFor(live.fontFamily),
+              }}
             >
               {live.text}
             </p>
@@ -89,7 +113,11 @@ function PreviewStage({ live }: { live: LiveState }) {
             </p>
           </div>
         </div>
-      ) : null}
+      ) : (
+        <div className="absolute inset-0 flex items-center justify-center text-xs text-muted-foreground">
+          {live.mode === "black" ? "Output is black" : "Output is blank"}
+        </div>
+      )}
     </div>
   );
 }
@@ -112,6 +140,8 @@ function combineReference(verses: Verse[]): string {
 /* ---------------------------------------------------------------- split -- */
 
 const BACKGROUND_KEY = "tmp.scripture.backgroundId";
+const FONT_SCALE_KEY = "tmp.scripture.fontScale";
+const FONT_FAMILY_KEY = "tmp.scripture.fontFamily";
 const SPLIT_KEY = "tmp.controlPanel.splitRatio";
 /** Fraction of the row taken by the verse list; the preview gets the rest. */
 const DEFAULT_SPLIT = 0.38;
@@ -144,30 +174,45 @@ function BackgroundSwatch({
   item,
   selected,
   onSelect,
+  onRemove,
 }: {
   item: MediaItem;
   selected: boolean;
   onSelect: () => void;
+  onRemove: () => void;
 }) {
   const url = useMediaUrl(item);
   return (
-    <button
-      onClick={onSelect}
-      title={item.name}
-      aria-pressed={selected}
-      className={cn(
-        "h-9 w-14 shrink-0 overflow-hidden rounded-md border bg-panel transition-colors",
-        selected ? "border-accent ring-1 ring-accent" : "border-border hover:border-accent/50",
-      )}
-    >
-      {url ? (
-        <img src={url} alt="" className="h-full w-full object-cover" loading="lazy" />
-      ) : (
-        <span className="flex h-full w-full items-center justify-center text-muted-foreground">
-          <ImageIcon className="h-3.5 w-3.5" />
-        </span>
-      )}
-    </button>
+    <div className="group/bg relative shrink-0">
+      <button
+        onClick={onSelect}
+        title={item.name}
+        aria-pressed={selected}
+        className={cn(
+          "h-9 w-14 overflow-hidden rounded-md border bg-panel transition-colors",
+          selected ? "border-accent ring-1 ring-accent" : "border-border hover:border-accent/50",
+        )}
+      >
+        {url ? (
+          <img src={url} alt="" className="h-full w-full object-cover" loading="lazy" />
+        ) : (
+          <span className="flex h-full w-full items-center justify-center text-muted-foreground">
+            <ImageIcon className="h-3.5 w-3.5" />
+          </span>
+        )}
+      </button>
+      <button
+        onClick={(e) => {
+          e.stopPropagation();
+          onRemove();
+        }}
+        title="Remove background"
+        aria-label="Remove background"
+        className="absolute -right-1 -top-1 hidden h-4 w-4 items-center justify-center rounded-full bg-destructive text-destructive-foreground group-hover/bg:flex"
+      >
+        <X className="h-2.5 w-2.5" />
+      </button>
+    </div>
   );
 }
 
@@ -178,6 +223,9 @@ function ControlPanel() {
   const library = useMediaLibrary();
   const [translation, setTranslation] = useState<Translation>("WEB");
   const [backgroundId, setBackgroundId] = useState<string | null>(null);
+  const [fontScale, setFontScale] = useState(DEFAULT_FONT_SCALE);
+  const [fontFamily, setFontFamily] = useState<ScriptureFontKey>(DEFAULT_FONT_KEY);
+  const bgFileRef = useRef<HTMLInputElement>(null);
   const [query, setQuery] = useState("");
   const preBlankRef = useRef<LiveState | null>(null);
   const rowRefs = useRef(new Map<string, HTMLButtonElement>());
@@ -202,10 +250,18 @@ function ControlPanel() {
 
   const liveVerseId = live.mode === "scripture" ? live.verseId : null;
 
-  // Restore the last-chosen scripture background once on mount.
+  // Restore the last-chosen scripture background/text settings once on mount.
   useEffect(() => {
     const stored = window.localStorage.getItem(BACKGROUND_KEY);
     if (stored) setBackgroundId(stored);
+    const storedScale = Number.parseFloat(window.localStorage.getItem(FONT_SCALE_KEY) ?? "");
+    if (Number.isFinite(storedScale)) {
+      setFontScale(Math.min(MAX_FONT_SCALE, Math.max(MIN_FONT_SCALE, storedScale)));
+    }
+    const storedFont = window.localStorage.getItem(FONT_FAMILY_KEY);
+    if (storedFont && SCRIPTURE_FONTS.some((f) => f.key === storedFont)) {
+      setFontFamily(storedFont as ScriptureFontKey);
+    }
   }, []);
 
   useEffect(() => {
@@ -213,9 +269,29 @@ function ControlPanel() {
     else window.localStorage.removeItem(BACKGROUND_KEY);
   }, [backgroundId]);
 
+  useEffect(() => {
+    window.localStorage.setItem(FONT_SCALE_KEY, String(fontScale));
+  }, [fontScale]);
+
+  useEffect(() => {
+    window.localStorage.setItem(FONT_FAMILY_KEY, fontFamily);
+  }, [fontFamily]);
+
+  // Bible backgrounds live in their own dedicated collection, kept separate
+  // from the general Media library so it isn't cluttered with every photo
+  // and clip the team has imported for slides/videos.
   const backgroundOptions = useMemo(
-    () => library.items.filter((i) => i.kind !== "video"),
+    () => library.items.filter((i) => i.collection === "background"),
     [library.items],
+  );
+
+  const addBackgroundFiles = useCallback(
+    async (files: FileList | File[]) => {
+      const created = await library.importFiles(files, "background");
+      const first = created[0];
+      if (first) setBackgroundId(first.id);
+    },
+    [library],
   );
   const selectedBackground = useMemo(
     () => backgroundOptions.find((i) => i.id === backgroundId) ?? null,
@@ -242,6 +318,14 @@ function ControlPanel() {
     push({ ...live, background: liveBackground });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [liveBackground]);
+
+  // Text size / font changes apply live without re-sending the whole verse.
+  useEffect(() => {
+    if (live.mode !== "scripture") return;
+    if (live.fontScale === fontScale && live.fontFamily === fontFamily) return;
+    push({ ...live, fontScale, fontFamily });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [fontScale, fontFamily]);
 
   /* --- suggestions: recomputed synchronously on every keystroke ---------- */
   const suggestions = useMemo(
@@ -293,9 +377,11 @@ function ControlPanel() {
         text: combineVerses(verses, translation),
         translation,
         background: liveBackground,
+        fontScale,
+        fontFamily,
       });
     },
-    [push, translation, liveBackground],
+    [push, translation, liveBackground, fontScale, fontFamily],
   );
 
   const closeSearch = useCallback(() => {
@@ -336,6 +422,8 @@ function ControlPanel() {
         text: restore.text,
         translation: restore.translation,
         background: restore.background,
+        fontScale: restore.fontScale,
+        fontFamily: restore.fontFamily,
       });
     }
   };
@@ -629,7 +717,7 @@ function ControlPanel() {
 
               <div className="flex min-w-0 items-center gap-1.5">
                 <span className="shrink-0 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-                  Background
+                  Bible Background
                 </span>
                 <div className="flex min-w-0 flex-wrap items-center gap-1.5">
                   <button
@@ -650,14 +738,78 @@ function ControlPanel() {
                       item={item}
                       selected={backgroundId === item.id}
                       onSelect={() => setBackgroundId(item.id)}
+                      onRemove={() => {
+                        if (backgroundId === item.id) setBackgroundId(null);
+                        library.remove(item);
+                      }}
                     />
                   ))}
+                  <button
+                    onClick={() => bgFileRef.current?.click()}
+                    title="Add a Bible background image"
+                    aria-label="Add a Bible background image"
+                    className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-dashed border-border text-muted-foreground transition-colors hover:border-accent/50 hover:text-foreground"
+                  >
+                    <Plus className="h-3.5 w-3.5" />
+                  </button>
+                  <input
+                    ref={bgFileRef}
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    className="hidden"
+                    onChange={(e) => {
+                      if (e.target.files && e.target.files.length > 0) {
+                        void addBackgroundFiles(e.target.files);
+                      }
+                      e.target.value = "";
+                    }}
+                  />
                   {backgroundOptions.length === 0 ? (
                     <span className="text-[10px] text-muted-foreground">
-                      Add images from the Media tab to use as backgrounds.
+                      This is a dedicated set, separate from the Media library — add images just for
+                      scripture backgrounds.
                     </span>
                   ) : null}
                 </div>
+              </div>
+
+              <div className="flex min-w-0 items-center gap-1.5">
+                <span className="shrink-0 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                  Text
+                </span>
+                <select
+                  value={fontFamily}
+                  onChange={(e) => setFontFamily(e.target.value as ScriptureFontKey)}
+                  className="h-8 shrink-0 rounded-md border border-border bg-panel px-2 text-xs text-foreground transition-colors hover:border-accent/50 focus:outline-none focus-visible:ring-1 focus-visible:ring-accent"
+                >
+                  {SCRIPTURE_FONTS.map((f) => (
+                    <option key={f.key} value={f.key}>
+                      {f.label}
+                    </option>
+                  ))}
+                </select>
+                <input
+                  type="range"
+                  min={MIN_FONT_SCALE}
+                  max={MAX_FONT_SCALE}
+                  step={0.05}
+                  value={fontScale}
+                  onChange={(e) => setFontScale(Number.parseFloat(e.target.value))}
+                  className="h-8 w-28 shrink-0 accent-accent"
+                  aria-label="Scripture text size"
+                />
+                <span className="w-9 shrink-0 text-[10px] tabular-nums text-muted-foreground">
+                  {Math.round(fontScale * 100)}%
+                </span>
+                {fontScale !== DEFAULT_FONT_SCALE ? (
+                  <button
+                    onClick={() => setFontScale(DEFAULT_FONT_SCALE)}
+                    className="shrink-0 text-[10px] text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
+                  >
+                    Reset
+                  </button>
+                ) : null}
               </div>
             </div>
           </div>
