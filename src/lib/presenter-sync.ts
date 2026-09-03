@@ -50,6 +50,8 @@ export type LiveState =
       reference: string;
       text: string;
       translation: Translation;
+      /** Optional background image behind the verse text. */
+      background?: { mediaId: string; src?: string | undefined } | undefined;
     };
 
 export type SyncMessage =

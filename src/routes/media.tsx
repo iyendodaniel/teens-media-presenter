@@ -12,16 +12,23 @@ import {
   Play,
   Plus,
   RefreshCw,
+  Repeat,
   RotateCcw,
   Search,
   Star,
+  Timer as TimerIcon,
   Trash2,
   Upload,
   X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useController } from "@/hooks/use-presenter-sync";
-import { useMediaLibrary, useMediaUrl, useService } from "@/hooks/use-media-library";
+import {
+  useMediaLibrary,
+  useMediaUrl,
+  useResolvedUrl,
+  useService,
+} from "@/hooks/use-media-library";
 import { useFolderLibrary } from "@/hooks/use-folder-library";
 import { useSplitRatio } from "@/hooks/use-split-ratio";
 import { MediaStage, fitClass } from "@/components/media/media-stage";
@@ -197,6 +204,57 @@ function SelectedPreview({ item, fit }: { item: MediaItem; fit: MediaFitMode }) 
 
 /* ----------------------------------------------------------------- folder */
 
+/** Large thumbnail card for a folder entry — mirrors MediaThumb's grid look. */
+function FolderThumb({ entry, onSelect }: { entry: FolderEntry; onSelect: () => void }) {
+  const [preview, setPreview] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    let objectUrl: string | null = null;
+    if (entry.kind === "image" || entry.kind === "gif") {
+      void entry.handle.getFile().then((file) => {
+        if (cancelled) return;
+        objectUrl = URL.createObjectURL(file);
+        setPreview(objectUrl);
+      });
+    }
+    return () => {
+      cancelled = true;
+      if (objectUrl) URL.revokeObjectURL(objectUrl);
+    };
+  }, [entry]);
+
+  return (
+    <button
+      onClick={onSelect}
+      title={entry.name}
+      className="group relative overflow-hidden rounded-lg border border-border bg-panel text-left transition-colors hover:border-accent/50"
+    >
+      <span className="flex aspect-video w-full items-center justify-center overflow-hidden bg-stage">
+        {preview ? (
+          <img src={preview} alt="" className="h-full w-full object-cover" loading="lazy" />
+        ) : (
+          <span className="text-muted-foreground">
+            {entry.kind === "video" ? (
+              <Film className="h-6 w-6" />
+            ) : (
+              <ImageIcon className="h-6 w-6" />
+            )}
+          </span>
+        )}
+      </span>
+      <span className="flex items-center gap-1.5 px-2 py-1.5">
+        {entry.kind === "video" ? (
+          <Film className="h-3 w-3 shrink-0 text-accent" />
+        ) : (
+          <ImageIcon className="h-3 w-3 shrink-0 text-muted-foreground" />
+        )}
+        <span className="line-clamp-1 flex-1 text-xs text-foreground">{entry.name}</span>
+      </span>
+    </button>
+  );
+}
+
 function FolderTab({
   folder,
   onSelectEntry,
@@ -262,23 +320,11 @@ function FolderTab({
       ) : folder.entries.length === 0 ? (
         <p className="text-xs text-muted-foreground">No images or videos in this folder.</p>
       ) : (
-        <ul className="flex flex-col gap-0.5">
+        <div className="grid grid-cols-2 gap-2 xl:grid-cols-3">
           {folder.entries.map((entry) => (
-            <li key={entry.name}>
-              <button
-                onClick={() => onSelectEntry(entry)}
-                className="flex w-full items-center gap-2 rounded px-2 py-1.5 text-left text-xs text-foreground transition-colors hover:bg-panel-raised"
-              >
-                {entry.kind === "video" ? (
-                  <Film className="h-3.5 w-3.5 shrink-0 text-accent" />
-                ) : (
-                  <ImageIcon className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-                )}
-                <span className="truncate">{entry.name}</span>
-              </button>
-            </li>
+            <FolderThumb key={entry.name} entry={entry} onSelect={() => onSelectEntry(entry)} />
           ))}
-        </ul>
+        </div>
       )}
     </div>
   );
@@ -298,6 +344,7 @@ function MediaPanel() {
   const [activeIndex, setActiveIndex] = useState(0);
   const [selected, setSelected] = useState<MediaItem | null>(null);
   const [fit, setFit] = useState<MediaFitMode>("fit");
+  const [loop, setLoop] = useState(false);
   const [dropping, setDropping] = useState(false);
   const [position, setPosition] = useState({ current: 0, duration: 0 });
 
@@ -366,7 +413,7 @@ function MediaPanel() {
           playing: opts?.playing ?? true,
           seekTo: 0,
           seekRev: Date.now(),
-          loop: false,
+          loop,
           muted: false,
           embed: item.embed,
         });
@@ -374,7 +421,7 @@ function MediaPanel() {
         push({ mode: "image", ...common });
       }
     },
-    [fit, library, push],
+    [fit, loop, library, push],
   );
 
   const setPlaying = useCallback(
@@ -400,6 +447,14 @@ function MediaPanel() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fit]);
+
+  // Loop changes apply live without re-sending the whole item.
+  useEffect(() => {
+    if (live.mode === "video") {
+      if (live.loop !== loop) push({ ...live, loop });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loop]);
 
   const selectItem = useCallback((item: MediaItem) => {
     setSelected(item);
@@ -441,6 +496,19 @@ function MediaPanel() {
       // go through the normal import path (blob copied into IndexedDB) so
       // playback uses the exact same, already-working pipeline as any other
       // imported file. From here on it behaves like a regular library item.
+      //
+      // Re-picking a file already imported from this folder reuses the
+      // existing library item instead of re-importing: without this, every
+      // click silently copied the whole file into IndexedDB again (slow for
+      // video) and popped the "Importing…" banner in and out, which is what
+      // made the folder view feel like it was reloading.
+      const existing = library.items.find(
+        (i) => i.source === "imported" && i.name === entry.name && i.kind === entry.kind,
+      );
+      if (existing) {
+        selectItem(existing);
+        return;
+      }
       const file = await entry.handle.getFile();
       const created = await library.importFiles([file]);
       const item = created[0];
@@ -895,52 +963,61 @@ function MediaPanel() {
               </section>
             ) : null}
 
-            <section className="mt-5">
-              <div className="mb-1.5 flex items-center justify-between">
-                <h3 className="font-display text-xs tracking-wider text-muted-foreground">
-                  SUNDAY SERVICE
+            <div className="mt-5 grid gap-4 sm:grid-cols-[minmax(0,1fr)_13rem]">
+              <section>
+                <div className="mb-1.5 flex items-center justify-between">
+                  <h3 className="font-display text-xs tracking-wider text-muted-foreground">
+                    SUNDAY SERVICE
+                  </h3>
+                  <button
+                    onClick={() => setOrderOpen(true)}
+                    className="flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] text-muted-foreground transition-colors hover:bg-panel-raised hover:text-foreground"
+                  >
+                    <ClipboardPaste className="h-3 w-3" /> Paste order of service
+                  </button>
+                </div>
+                <ol className="flex flex-col">
+                  {service.items.map((entry, i) => {
+                    const item = entry.mediaId
+                      ? library.items.find((m) => m.id === entry.mediaId)
+                      : undefined;
+                    return (
+                      <li key={entry.id} className="group flex items-center gap-2">
+                        <button
+                          onClick={() => item && selectItem(item)}
+                          disabled={!item}
+                          className={cn(
+                            "flex min-w-0 flex-1 items-center gap-2 rounded px-2 py-1.5 text-left text-xs transition-colors",
+                            item
+                              ? "text-foreground hover:bg-panel-raised"
+                              : "cursor-default text-muted-foreground",
+                          )}
+                        >
+                          <span className="font-mono text-[10px] text-muted-foreground">
+                            {String(i + 1).padStart(2, "0")}
+                          </span>
+                          <span className="truncate">{entry.label}</span>
+                        </button>
+                        <button
+                          onClick={() => service.remove(entry.id)}
+                          aria-label={`Remove ${entry.label} from service`}
+                          className="mr-1 opacity-0 transition-opacity hover:text-destructive group-hover:opacity-100"
+                        >
+                          <X className="h-3.5 w-3.5" />
+                        </button>
+                      </li>
+                    );
+                  })}
+                </ol>
+              </section>
+
+              <section>
+                <h3 className="mb-1.5 flex items-center gap-1 font-display text-xs tracking-wider text-muted-foreground">
+                  <TimerIcon className="h-3 w-3" /> TIMER
                 </h3>
-                <button
-                  onClick={() => setOrderOpen(true)}
-                  className="flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] text-muted-foreground transition-colors hover:bg-panel-raised hover:text-foreground"
-                >
-                  <ClipboardPaste className="h-3 w-3" /> Paste order of service
-                </button>
-              </div>
-              <ol className="flex flex-col">
-                {service.items.map((entry, i) => {
-                  const item = entry.mediaId
-                    ? library.items.find((m) => m.id === entry.mediaId)
-                    : undefined;
-                  return (
-                    <li key={entry.id} className="group flex items-center gap-2">
-                      <button
-                        onClick={() => item && selectItem(item)}
-                        disabled={!item}
-                        className={cn(
-                          "flex min-w-0 flex-1 items-center gap-2 rounded px-2 py-1.5 text-left text-xs transition-colors",
-                          item
-                            ? "text-foreground hover:bg-panel-raised"
-                            : "cursor-default text-muted-foreground",
-                        )}
-                      >
-                        <span className="font-mono text-[10px] text-muted-foreground">
-                          {String(i + 1).padStart(2, "0")}
-                        </span>
-                        <span className="truncate">{entry.label}</span>
-                      </button>
-                      <button
-                        onClick={() => service.remove(entry.id)}
-                        aria-label={`Remove ${entry.label} from service`}
-                        className="mr-1 opacity-0 transition-opacity hover:text-destructive group-hover:opacity-100"
-                      >
-                        <X className="h-3.5 w-3.5" />
-                      </button>
-                    </li>
-                  );
-                })}
-              </ol>
-            </section>
+                <TimerWidget />
+              </section>
+            </div>
           </div>
         </div>
 
@@ -1095,23 +1172,43 @@ function MediaPanel() {
             </button>
           </div>
 
-          <div className="flex items-center gap-2">
-            <span className="text-xs text-muted-foreground">Screen fit</span>
-            <div className="inline-flex rounded-md border border-border bg-panel p-1">
-              {(["fit", "fill", "center"] as MediaFitMode[]).map((mode) => (
-                <button
-                  key={mode}
-                  onClick={() => setFit(mode)}
-                  className={cn(
-                    "rounded px-3 py-1 text-xs font-semibold capitalize tracking-wide transition-colors",
-                    fit === mode
-                      ? "bg-accent text-accent-ink"
-                      : "text-muted-foreground hover:text-foreground",
-                  )}
-                >
-                  {mode}
-                </button>
-              ))}
+          <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-muted-foreground">Screen fit</span>
+              <div className="inline-flex rounded-md border border-border bg-panel p-1">
+                {(["fit", "fill", "center"] as MediaFitMode[]).map((mode) => (
+                  <button
+                    key={mode}
+                    onClick={() => setFit(mode)}
+                    className={cn(
+                      "rounded px-3 py-1 text-xs font-semibold capitalize tracking-wide transition-colors",
+                      fit === mode
+                        ? "bg-accent text-accent-ink"
+                        : "text-muted-foreground hover:text-foreground",
+                    )}
+                  >
+                    {mode}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-muted-foreground">Loop video</span>
+              <button
+                onClick={() => setLoop((l) => !l)}
+                aria-pressed={loop}
+                title="Repeat the live video from the start when it ends"
+                className={cn(
+                  "inline-flex items-center gap-1.5 rounded-md border px-3 py-1 text-xs font-semibold tracking-wide transition-colors",
+                  loop
+                    ? "border-accent bg-accent text-accent-ink"
+                    : "border-border bg-panel text-muted-foreground hover:text-foreground",
+                )}
+              >
+                <Repeat className="h-3.5 w-3.5" />
+                {loop ? "On" : "Off"}
+              </button>
             </div>
           </div>
 
@@ -1192,6 +1289,132 @@ function MediaPanel() {
   );
 }
 
+/* ------------------------------------------------------------------ timer */
+
+const TIMER_PRESETS = [5, 10, 15, 20, 30];
+
+/** Operator-only countdown clock for pacing the service — not sent to Output. */
+function TimerWidget() {
+  const [totalSeconds, setTotalSeconds] = useState(5 * 60);
+  const [remaining, setRemaining] = useState(5 * 60);
+  const [running, setRunning] = useState(false);
+  const [minutesInput, setMinutesInput] = useState("5");
+
+  useEffect(() => {
+    if (!running) return;
+    const id = window.setInterval(() => {
+      setRemaining((r) => {
+        if (r <= 1) {
+          setRunning(false);
+          return 0;
+        }
+        return r - 1;
+      });
+    }, 1000);
+    return () => window.clearInterval(id);
+  }, [running]);
+
+  const applyMinutes = useCallback((minutes: number) => {
+    const clamped = Math.max(0, Math.min(180, minutes));
+    setRunning(false);
+    setTotalSeconds(clamped * 60);
+    setRemaining(clamped * 60);
+    setMinutesInput(String(clamped));
+  }, []);
+
+  const toggle = useCallback(() => {
+    setRunning((r) => !r);
+  }, []);
+
+  const reset = useCallback(() => {
+    setRunning(false);
+    setRemaining(totalSeconds);
+  }, [totalSeconds]);
+
+  const mm = String(Math.floor(remaining / 60)).padStart(2, "0");
+  const ss = String(remaining % 60).padStart(2, "0");
+  const isDone = remaining === 0;
+  const isLow = remaining > 0 && remaining <= 30;
+  const pct = totalSeconds > 0 ? ((totalSeconds - remaining) / totalSeconds) * 100 : 0;
+
+  return (
+    <div className="flex flex-col gap-2.5 rounded-md border border-border bg-panel p-3">
+      <div
+        className={cn(
+          "flex items-center justify-center rounded-md border py-3 font-mono text-2xl tabular-nums transition-colors",
+          isDone
+            ? "border-destructive bg-destructive/10 text-destructive"
+            : isLow
+              ? "border-destructive/60 text-destructive"
+              : "border-border text-foreground",
+        )}
+      >
+        {mm}:{ss}
+      </div>
+
+      <div className="h-1 w-full overflow-hidden rounded-full bg-panel-raised">
+        <div
+          className={cn(
+            "h-full transition-[width] duration-1000",
+            isDone ? "bg-destructive" : "bg-accent",
+          )}
+          style={{ width: `${Math.min(100, pct)}%` }}
+        />
+      </div>
+
+      <div className="flex flex-wrap gap-1">
+        {TIMER_PRESETS.map((m) => (
+          <button
+            key={m}
+            onClick={() => applyMinutes(m)}
+            className="rounded px-1.5 py-1 text-[10px] font-semibold text-muted-foreground transition-colors hover:bg-panel-raised hover:text-foreground"
+          >
+            {m}m
+          </button>
+        ))}
+      </div>
+
+      <div className="flex items-center gap-1.5">
+        <input
+          value={minutesInput}
+          onChange={(e) => setMinutesInput(e.target.value.replace(/[^0-9]/g, ""))}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") applyMinutes(Number.parseInt(minutesInput, 10) || 0);
+          }}
+          inputMode="numeric"
+          aria-label="Custom minutes"
+          placeholder="Min"
+          className="w-full min-w-0 rounded-md border border-input bg-background px-2 py-1 text-xs placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+        />
+        <button
+          onClick={() => applyMinutes(Number.parseInt(minutesInput, 10) || 0)}
+          className="shrink-0 rounded-md border border-border bg-panel px-2 py-1 text-[10px] text-foreground transition-colors hover:bg-panel-raised"
+        >
+          Set
+        </button>
+      </div>
+
+      <div className="flex gap-1.5">
+        <button
+          onClick={toggle}
+          disabled={remaining <= 0}
+          className="flex flex-1 items-center justify-center gap-1 rounded-md bg-accent py-1.5 text-xs font-semibold text-accent-ink transition-opacity hover:opacity-90 disabled:opacity-40"
+        >
+          {running ? <Pause className="h-3 w-3" /> : <Play className="h-3 w-3" />}
+          {running ? "Pause" : "Start"}
+        </button>
+        <button
+          onClick={reset}
+          aria-label="Reset timer"
+          className="flex items-center justify-center gap-1 rounded-md border border-border bg-panel px-2.5 py-1.5 text-xs text-foreground transition-colors hover:bg-panel-raised"
+        >
+          <RotateCcw className="h-3 w-3" />
+        </button>
+      </div>
+    </div>
+  );
+}
+
 function LiveMirror({
   live,
   onTime,
@@ -1199,14 +1422,27 @@ function LiveMirror({
   live: LiveState;
   onTime: (current: number, duration: number) => void;
 }) {
+  const background = live.mode === "scripture" ? live.background : undefined;
+  const backgroundUrl = useResolvedUrl(background?.mediaId, background?.src);
+
   if (live.mode === "image" || live.mode === "video") {
     return <MediaStage state={live} forceMuted onTime={onTime} />;
   }
   if (live.mode === "scripture") {
     return (
-      <div className="flex h-full w-full flex-col items-center justify-center gap-3 px-6 text-center">
-        <p className="line-clamp-4 text-sm text-foreground">{live.text}</p>
-        <p className="font-display text-accent">{live.reference}</p>
+      <div className="relative flex h-full w-full flex-col items-center justify-center gap-3 px-6 text-center">
+        {backgroundUrl ? (
+          <>
+            <img
+              src={backgroundUrl}
+              alt=""
+              className="absolute inset-0 h-full w-full object-cover"
+            />
+            <div className="absolute inset-0 bg-black/55" />
+          </>
+        ) : null}
+        <p className="relative z-10 line-clamp-4 text-sm text-foreground">{live.text}</p>
+        <p className="relative z-10 font-display text-accent">{live.reference}</p>
       </div>
     );
   }

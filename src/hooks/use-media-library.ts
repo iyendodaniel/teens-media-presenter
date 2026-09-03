@@ -117,6 +117,37 @@ export function useMediaUrl(item: MediaItem | null | undefined): string | null {
   return url;
 }
 
+/**
+ * Resolves a renderable URL from a raw mediaId/src pair (as carried on
+ * LiveState, e.g. a scripture background) rather than a full MediaItem.
+ * Builtin/linked items carry `src` directly; imported items resolve from
+ * IndexedDB by id.
+ */
+export function useResolvedUrl(mediaId?: string | null, src?: string | null): string | null {
+  const [url, setUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    if (!mediaId) {
+      setUrl(null);
+      return;
+    }
+    if (src) {
+      setUrl(src);
+      return;
+    }
+    setUrl(null);
+    void resolveBlobUrl(mediaId).then((resolved) => {
+      if (!cancelled) setUrl(resolved);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [mediaId, src]);
+
+  return url;
+}
+
 export function useService() {
   const [items, setItems] = useState<ServiceItem[]>([]);
 

@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { ChevronLeft, CornerDownLeft, Search, X } from "lucide-react";
+import { ChevronLeft, CornerDownLeft, Image as ImageIcon, Search, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useController } from "@/hooks/use-presenter-sync";
 import type { LiveState, Translation } from "@/lib/presenter-sync";
@@ -14,6 +14,8 @@ import {
   type Verse,
 } from "@/lib/scriptures";
 import { buildSuggestions, type Suggestion } from "@/lib/search-suggestions";
+import { useMediaLibrary, useMediaUrl, useResolvedUrl } from "@/hooks/use-media-library";
+import type { MediaItem } from "@/lib/media-library";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -46,6 +48,9 @@ function previewFontSize(length: number): string {
 }
 
 function PreviewStage({ live }: { live: LiveState }) {
+  const background = live.mode === "scripture" ? live.background : undefined;
+  const backgroundUrl = useResolvedUrl(background?.mediaId, background?.src);
+
   return (
     <div
       className="relative aspect-video w-full overflow-hidden rounded-lg bg-stage shadow-stage"
@@ -56,21 +61,33 @@ function PreviewStage({ live }: { live: LiveState }) {
           key={live.revision}
           className="stage-fade-enter absolute inset-0 flex flex-col items-center justify-center gap-[3cqw] px-[6cqw] py-[6cqw] text-center"
         >
-          <p
-            className="max-w-[92%] font-sans font-medium leading-[1.35] text-foreground"
-            style={{ fontSize: previewFontSize(live.text.length) }}
-          >
-            {live.text}
-          </p>
-          <p
-            className="font-display text-accent"
-            style={{ fontSize: "clamp(0.55rem, 2cqw, 1.1rem)", letterSpacing: "0.04em" }}
-          >
-            {live.reference}
-            <span className="ml-2 align-middle text-[0.6em] text-accent-dim">
-              {live.translation}
-            </span>
-          </p>
+          {backgroundUrl ? (
+            <>
+              <img
+                src={backgroundUrl}
+                alt=""
+                className="absolute inset-0 h-full w-full object-cover"
+              />
+              <div className="absolute inset-0 bg-black/55" />
+            </>
+          ) : null}
+          <div className="relative z-10 flex flex-col items-center gap-[3cqw]">
+            <p
+              className="max-w-[92%] font-sans font-medium leading-[1.35] text-foreground"
+              style={{ fontSize: previewFontSize(live.text.length) }}
+            >
+              {live.text}
+            </p>
+            <p
+              className="font-display text-accent"
+              style={{ fontSize: "clamp(0.55rem, 2cqw, 1.1rem)", letterSpacing: "0.04em" }}
+            >
+              {live.reference}
+              <span className="ml-2 align-middle text-[0.6em] text-accent-dim">
+                {live.translation}
+              </span>
+            </p>
+          </div>
         </div>
       ) : null}
     </div>
@@ -94,6 +111,7 @@ function combineReference(verses: Verse[]): string {
 
 /* ---------------------------------------------------------------- split -- */
 
+const BACKGROUND_KEY = "tmp.scripture.backgroundId";
 const SPLIT_KEY = "tmp.controlPanel.splitRatio";
 /** Fraction of the row taken by the verse list; the preview gets the rest. */
 const DEFAULT_SPLIT = 0.38;
@@ -120,11 +138,46 @@ function useSplitRatio() {
   return { ratio, setRatio, commit };
 }
 
+/* --------------------------------------------------------- background ---- */
+
+function BackgroundSwatch({
+  item,
+  selected,
+  onSelect,
+}: {
+  item: MediaItem;
+  selected: boolean;
+  onSelect: () => void;
+}) {
+  const url = useMediaUrl(item);
+  return (
+    <button
+      onClick={onSelect}
+      title={item.name}
+      aria-pressed={selected}
+      className={cn(
+        "h-9 w-14 shrink-0 overflow-hidden rounded-md border bg-panel transition-colors",
+        selected ? "border-accent ring-1 ring-accent" : "border-border hover:border-accent/50",
+      )}
+    >
+      {url ? (
+        <img src={url} alt="" className="h-full w-full object-cover" loading="lazy" />
+      ) : (
+        <span className="flex h-full w-full items-center justify-center text-muted-foreground">
+          <ImageIcon className="h-3.5 w-3.5" />
+        </span>
+      )}
+    </button>
+  );
+}
+
 /* -------------------------------------------------------------- panel ---- */
 
 function ControlPanel() {
   const { live, outputs, push } = useController();
+  const library = useMediaLibrary();
   const [translation, setTranslation] = useState<Translation>("WEB");
+  const [backgroundId, setBackgroundId] = useState<string | null>(null);
   const [query, setQuery] = useState("");
   const preBlankRef = useRef<LiveState | null>(null);
   const rowRefs = useRef(new Map<string, HTMLButtonElement>());
@@ -148,6 +201,47 @@ function ControlPanel() {
   const [navLoading, setNavLoading] = useState(false);
 
   const liveVerseId = live.mode === "scripture" ? live.verseId : null;
+
+  // Restore the last-chosen scripture background once on mount.
+  useEffect(() => {
+    const stored = window.localStorage.getItem(BACKGROUND_KEY);
+    if (stored) setBackgroundId(stored);
+  }, []);
+
+  useEffect(() => {
+    if (backgroundId) window.localStorage.setItem(BACKGROUND_KEY, backgroundId);
+    else window.localStorage.removeItem(BACKGROUND_KEY);
+  }, [backgroundId]);
+
+  const backgroundOptions = useMemo(
+    () => library.items.filter((i) => i.kind !== "video"),
+    [library.items],
+  );
+  const selectedBackground = useMemo(
+    () => backgroundOptions.find((i) => i.id === backgroundId) ?? null,
+    [backgroundOptions, backgroundId],
+  );
+  const liveBackground = useMemo(
+    () =>
+      selectedBackground
+        ? {
+            mediaId: selectedBackground.id,
+            src:
+              selectedBackground.source === "builtin" || selectedBackground.source === "linked"
+                ? selectedBackground.url
+                : undefined,
+          }
+        : undefined,
+    [selectedBackground],
+  );
+
+  // Background changes apply live without re-sending the whole verse.
+  useEffect(() => {
+    if (live.mode !== "scripture") return;
+    if (live.background?.mediaId === liveBackground?.mediaId) return;
+    push({ ...live, background: liveBackground });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [liveBackground]);
 
   /* --- suggestions: recomputed synchronously on every keystroke ---------- */
   const suggestions = useMemo(
@@ -198,9 +292,10 @@ function ControlPanel() {
         reference: combineReference(verses),
         text: combineVerses(verses, translation),
         translation,
+        background: liveBackground,
       });
     },
-    [push, translation],
+    [push, translation, liveBackground],
   );
 
   const closeSearch = useCallback(() => {
@@ -240,6 +335,7 @@ function ControlPanel() {
         reference: restore.reference,
         text: restore.text,
         translation: restore.translation,
+        background: restore.background,
       });
     }
   };
@@ -285,6 +381,7 @@ function ControlPanel() {
         reference: live.reference,
         text: nextText,
         translation,
+        background: live.background,
       });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -512,21 +609,56 @@ function ControlPanel() {
               )}
             </div>
 
-            <div className="inline-flex w-fit rounded-md border border-border bg-panel p-1">
-              {TRANSLATIONS.map((t) => (
-                <button
-                  key={t}
-                  onClick={() => setTranslation(t)}
-                  className={cn(
-                    "rounded px-3 py-1 text-xs font-semibold tracking-wide transition-colors",
-                    translation === t
-                      ? "bg-accent text-accent-ink"
-                      : "text-muted-foreground hover:text-foreground",
-                  )}
-                >
-                  {t}
-                </button>
-              ))}
+            <div className="flex flex-wrap items-center gap-4">
+              <div className="inline-flex w-fit rounded-md border border-border bg-panel p-1">
+                {TRANSLATIONS.map((t) => (
+                  <button
+                    key={t}
+                    onClick={() => setTranslation(t)}
+                    className={cn(
+                      "rounded px-3 py-1 text-xs font-semibold tracking-wide transition-colors",
+                      translation === t
+                        ? "bg-accent text-accent-ink"
+                        : "text-muted-foreground hover:text-foreground",
+                    )}
+                  >
+                    {t}
+                  </button>
+                ))}
+              </div>
+
+              <div className="flex min-w-0 items-center gap-1.5">
+                <span className="shrink-0 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                  Background
+                </span>
+                <div className="flex min-w-0 flex-wrap items-center gap-1.5">
+                  <button
+                    onClick={() => setBackgroundId(null)}
+                    aria-pressed={!backgroundId}
+                    className={cn(
+                      "flex h-9 w-14 shrink-0 items-center justify-center rounded-md border text-[9px] font-semibold tracking-wide transition-colors",
+                      !backgroundId
+                        ? "border-accent bg-accent/15 text-accent"
+                        : "border-border bg-panel text-muted-foreground hover:text-foreground",
+                    )}
+                  >
+                    NONE
+                  </button>
+                  {backgroundOptions.map((item) => (
+                    <BackgroundSwatch
+                      key={item.id}
+                      item={item}
+                      selected={backgroundId === item.id}
+                      onSelect={() => setBackgroundId(item.id)}
+                    />
+                  ))}
+                  {backgroundOptions.length === 0 ? (
+                    <span className="text-[10px] text-muted-foreground">
+                      Add images from the Media tab to use as backgrounds.
+                    </span>
+                  ) : null}
+                </div>
+              </div>
             </div>
           </div>
 
