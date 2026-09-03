@@ -1,0 +1,937 @@
+{
+  "translations": ["WEB", "KJV", "ASV"],
+  "books": [
+    {
+      "book": "Genesis",
+      "verses": [
+        {
+          "id": "gen-1-1",
+          "ref": "Genesis 1:1",
+          "text": {
+            "WEB": "In the beginning, God created the heavens and the earth.",
+            "KJV": "In the beginning God created the heaven and the earth.",
+            "ASV": "In the beginning God created the heavens and the earth."
+          }
+        },
+        {
+          "id": "gen-1-27",
+          "ref": "Genesis 1:27",
+          "text": {
+            "WEB": "God created man in his own image. In God's image he created him; male and female he created them.",
+            "KJV": "So God created man in his own image, in the image of God created he him; male and female created he them.",
+            "ASV": "And God created man in his own image, in the image of God created he him; male and female created he them."
+          }
+        },
+        {
+          "id": "gen-28-15",
+          "ref": "Genesis 28:15",
+          "text": {
+            "WEB": "Behold, I am with you, and will keep you, wherever you go, and will bring you again into this land. For I will not leave you, until I have done that which I have spoken of to you.",
+            "KJV": "And, behold, I am with thee, and will keep thee in all places whither thou goest, and will bring thee again into this land; for I will not leave thee, until I have done that which I have spoken to thee of.",
+            "ASV": "And, behold, I am with thee, and will keep thee whithersoever thou goest, and will bring thee again into this land: for I will not leave thee, until I have done that which I have spoken to thee of."
+          }
+        }
+      ]
+    },
+    {
+      "book": "Joshua",
+      "verses": [
+        {
+          "id": "jos-1-9",
+          "ref": "Joshua 1:9",
+          "text": {
+            "WEB": "Haven't I commanded you? Be strong and courageous. Don't be afraid. Don't be dismayed, for Yahweh your God is with you wherever you go.",
+            "KJV": "Have not I commanded thee? Be strong and of a good courage; be not afraid, neither be thou dismayed: for the LORD thy God is with thee whithersoever thou goest.",
+            "ASV": "Have not I commanded thee? Be strong and of good courage; be not affrighted, neither be thou dismayed: for Jehovah thy God is with thee whithersoever thou goest."
+          }
+        }
+      ]
+    },
+    {
+      "book": "Psalms",
+      "verses": [
+        {
+          "id": "psa-1-1",
+          "ref": "Psalm 1:1",
+          "text": {
+            "WEB": "Blessed is the man who doesn't walk in the counsel of the wicked, nor stand on the path of sinners, nor sit in the seat of scoffers.",
+            "KJV": "Blessed is the man that walketh not in the counsel of the ungodly, nor standeth in the way of sinners, nor sitteth in the seat of the scornful.",
+            "ASV": "Blessed is the man that walketh not in the counsel of the wicked, nor standeth in the way of sinners, nor sitteth in the seat of scoffers."
+          }
+        },
+        {
+          "id": "psa-19-1",
+          "ref": "Psalm 19:1",
+          "text": {
+            "WEB": "The heavens declare the glory of God. The expanse shows his handiwork.",
+            "KJV": "The heavens declare the glory of God; and the firmament sheweth his handywork.",
+            "ASV": "The heavens declare the glory of God; And the firmament showeth his handiwork."
+          }
+        },
+        {
+          "id": "psa-23-1",
+          "ref": "Psalm 23:1",
+          "text": {
+            "WEB": "Yahweh is my shepherd; I shall lack nothing.",
+            "KJV": "The LORD is my shepherd; I shall not want.",
+            "ASV": "Jehovah is my shepherd; I shall not want."
+          }
+        },
+        {
+          "id": "psa-23-4",
+          "ref": "Psalm 23:4",
+          "text": {
+            "WEB": "Even though I walk through the valley of the shadow of death, I will fear no evil, for you are with me. Your rod and your staff, they comfort me.",
+            "KJV": "Yea, though I walk through the valley of the shadow of death, I will fear no evil: for thou art with me; thy rod and thy staff they comfort me.",
+            "ASV": "Yea, though I walk through the valley of the shadow of death, I will fear no evil; For thou art with me: Thy rod and thy staff, they comfort me."
+          }
+        },
+        {
+          "id": "psa-27-1",
+          "ref": "Psalm 27:1",
+          "text": {
+            "WEB": "Yahweh is my light and my salvation. Whom shall I fear? Yahweh is the strength of my life. Of whom shall I be afraid?",
+            "KJV": "The LORD is my light and my salvation; whom shall I fear? the LORD is the strength of my life; of whom shall I be afraid?",
+            "ASV": "Jehovah is my light and my salvation; Whom shall I fear? Jehovah is the strength of my life; Of whom shall I be afraid?"
+          }
+        },
+        {
+          "id": "psa-34-8",
+          "ref": "Psalm 34:8",
+          "text": {
+            "WEB": "Oh taste and see that Yahweh is good. Blessed is the man who takes refuge in him.",
+            "KJV": "O taste and see that the LORD is good: blessed is the man that trusteth in him.",
+            "ASV": "Oh taste and see that Jehovah is good: Blessed is the man that taketh refuge in him."
+          }
+        },
+        {
+          "id": "psa-37-4",
+          "ref": "Psalm 37:4",
+          "text": {
+            "WEB": "Also delight yourself in Yahweh, and he will give you the desires of your heart.",
+            "KJV": "Delight thyself also in the LORD; and he shall give thee the desires of thine heart.",
+            "ASV": "Delight thyself also in Jehovah; And he will give thee the desires of thy heart."
+          }
+        },
+        {
+          "id": "psa-46-1",
+          "ref": "Psalm 46:1",
+          "text": {
+            "WEB": "God is our refuge and strength, a very present help in trouble.",
+            "KJV": "God is our refuge and strength, a very present help in trouble.",
+            "ASV": "God is our refuge and strength, A very present help in trouble."
+          }
+        },
+        {
+          "id": "psa-51-10",
+          "ref": "Psalm 51:10",
+          "text": {
+            "WEB": "Create in me a clean heart, O God. Renew a right spirit within me.",
+            "KJV": "Create in me a clean heart, O God; and renew a right spirit within me.",
+            "ASV": "Create in me a clean heart, O God; And renew a right spirit within me."
+          }
+        },
+        {
+          "id": "psa-91-1",
+          "ref": "Psalm 91:1",
+          "text": {
+            "WEB": "He who dwells in the secret place of the Most High will rest in the shadow of the Almighty.",
+            "KJV": "He that dwelleth in the secret place of the most High shall abide under the shadow of the Almighty.",
+            "ASV": "He that dwelleth in the secret place of the Most High Shall abide under the shadow of the Almighty."
+          }
+        },
+        {
+          "id": "psa-100-4",
+          "ref": "Psalm 100:4",
+          "text": {
+            "WEB": "Enter into his gates with thanksgiving, and into his courts with praise. Give thanks to him, and bless his name.",
+            "KJV": "Enter into his gates with thanksgiving, and into his courts with praise: be thankful unto him, and bless his name.",
+            "ASV": "Enter into his gates with thanksgiving, And into his courts with praise: Give thanks unto him, and bless his name."
+          }
+        },
+        {
+          "id": "psa-119-105",
+          "ref": "Psalm 119:105",
+          "text": {
+            "WEB": "Your word is a lamp to my feet, and a light for my path.",
+            "KJV": "Thy word is a lamp unto my feet, and a light unto my path.",
+            "ASV": "Thy word is a lamp unto my feet, And light unto my path."
+          }
+        },
+        {
+          "id": "psa-121-1",
+          "ref": "Psalm 121:1-2",
+          "text": {
+            "WEB": "I will lift up my eyes to the hills. Where does my help come from? My help comes from Yahweh, who made heaven and earth.",
+            "KJV": "I will lift up mine eyes unto the hills, from whence cometh my help. My help cometh from the LORD, which made heaven and earth.",
+            "ASV": "I will lift up mine eyes unto the mountains: From whence shall my help come? My help cometh from Jehovah, Who made heaven and earth."
+          }
+        },
+        {
+          "id": "psa-139-14",
+          "ref": "Psalm 139:14",
+          "text": {
+            "WEB": "I will give thanks to you, for I am fearfully and wonderfully made. Your works are wonderful. My soul knows that very well.",
+            "KJV": "I will praise thee; for I am fearfully and wonderfully made: marvellous are thy works; and that my soul knoweth right well.",
+            "ASV": "I will give thanks unto thee; for I am fearfully and wonderfully made: Wonderful are thy works; And that my soul knoweth right well."
+          }
+        },
+        {
+          "id": "psa-150-6",
+          "ref": "Psalm 150:6",
+          "text": {
+            "WEB": "Let everything that has breath praise Yahweh! Praise Yah!",
+            "KJV": "Let every thing that hath breath praise the LORD. Praise ye the LORD.",
+            "ASV": "Let everything that hath breath praise Jehovah. Praise ye Jehovah."
+          }
+        }
+      ]
+    },
+    {
+      "book": "Proverbs",
+      "verses": [
+        {
+          "id": "pro-3-5",
+          "ref": "Proverbs 3:5-6",
+          "text": {
+            "WEB": "Trust in Yahweh with all your heart, and don't lean on your own understanding. In all your ways acknowledge him, and he will make your paths straight.",
+            "KJV": "Trust in the LORD with all thine heart; and lean not unto thine own understanding. In all thy ways acknowledge him, and he shall direct thy paths.",
+            "ASV": "Trust in Jehovah with all thy heart, And lean not upon thine own understanding: In all thy ways acknowledge him, And he will direct thy paths."
+          }
+        },
+        {
+          "id": "pro-4-23",
+          "ref": "Proverbs 4:23",
+          "text": {
+            "WEB": "Keep your heart with all diligence, for out of it is the wellspring of life.",
+            "KJV": "Keep thy heart with all diligence; for out of it are the issues of life.",
+            "ASV": "Keep thy heart with all diligence; For out of it are the issues of life."
+          }
+        },
+        {
+          "id": "pro-18-10",
+          "ref": "Proverbs 18:10",
+          "text": {
+            "WEB": "Yahweh's name is a strong tower: the righteous run to him, and are safe.",
+            "KJV": "The name of the LORD is a strong tower: the righteous runneth into it, and is safe.",
+            "ASV": "The name of Jehovah is a strong tower; The righteous runneth into it, and is safe."
+          }
+        },
+        {
+          "id": "pro-22-6",
+          "ref": "Proverbs 22:6",
+          "text": {
+            "WEB": "Train up a child in the way he should go, and when he is old he will not depart from it.",
+            "KJV": "Train up a child in the way he should go: and when he is old, he will not depart from it.",
+            "ASV": "Train up a child in the way he should go, And even when he is old he will not depart from it."
+          }
+        },
+        {
+          "id": "pro-27-17",
+          "ref": "Proverbs 27:17",
+          "text": {
+            "WEB": "Iron sharpens iron; so a man sharpens his friend's countenance.",
+            "KJV": "Iron sharpeneth iron; so a man sharpeneth the countenance of his friend.",
+            "ASV": "Iron sharpeneth iron; So a man sharpeneth the countenance of his friend."
+          }
+        }
+      ]
+    },
+    {
+      "book": "Isaiah",
+      "verses": [
+        {
+          "id": "isa-9-6",
+          "ref": "Isaiah 9:6",
+          "text": {
+            "WEB": "For to us a child is born. To us a son is given; and the government will be on his shoulders. His name will be called Wonderful Counselor, Mighty God, Everlasting Father, Prince of Peace.",
+            "KJV": "For unto us a child is born, unto us a son is given: and the government shall be upon his shoulder: and his name shall be called Wonderful, Counsellor, The mighty God, The everlasting Father, The Prince of Peace.",
+            "ASV": "For unto us a child is born, unto us a son is given; and the government shall be upon his shoulder: and his name shall be called Wonderful, Counsellor, Mighty God, Everlasting Father, Prince of Peace."
+          }
+        },
+        {
+          "id": "isa-26-3",
+          "ref": "Isaiah 26:3",
+          "text": {
+            "WEB": "You will keep whoever's mind is steadfast in perfect peace, because he trusts in you.",
+            "KJV": "Thou wilt keep him in perfect peace, whose mind is stayed on thee: because he trusteth in thee.",
+            "ASV": "Thou wilt keep him in perfect peace, whose mind is stayed on thee; because he trusteth in thee."
+          }
+        },
+        {
+          "id": "isa-40-31",
+          "ref": "Isaiah 40:31",
+          "text": {
+            "WEB": "But those who wait for Yahweh will renew their strength. They will mount up with wings like eagles. They will run and not be weary. They will walk and not faint.",
+            "KJV": "But they that wait upon the LORD shall renew their strength; they shall mount up with wings as eagles; they shall run, and not be weary; and they shall walk, and not faint.",
+            "ASV": "But they that wait for Jehovah shall renew their strength; they shall mount up with wings as eagles; they shall run and not be weary; they shall walk and not faint."
+          }
+        },
+        {
+          "id": "isa-41-10",
+          "ref": "Isaiah 41:10",
+          "text": {
+            "WEB": "Don't you be afraid, for I am with you. Don't be dismayed, for I am your God. I will strengthen you. Yes, I will help you. Yes, I will uphold you with the right hand of my righteousness.",
+            "KJV": "Fear thou not; for I am with thee: be not dismayed; for I am thy God: I will strengthen thee; yea, I will help thee; yea, I will uphold thee with the right hand of my righteousness.",
+            "ASV": "Fear thou not, for I am with thee; be not dismayed, for I am thy God; I will strengthen thee; yea, I will help thee; yea, I will uphold thee with the right hand of my righteousness."
+          }
+        },
+        {
+          "id": "isa-53-5",
+          "ref": "Isaiah 53:5",
+          "text": {
+            "WEB": "But he was pierced for our transgressions. He was crushed for our iniquities. The punishment that brought our peace was on him; and by his wounds we are healed.",
+            "KJV": "But he was wounded for our transgressions, he was bruised for our iniquities: the chastisement of our peace was upon him; and with his stripes we are healed.",
+            "ASV": "But he was wounded for our transgressions, he was bruised for our iniquities; the chastisement of our peace was upon him; and with his stripes we are healed."
+          }
+        },
+        {
+          "id": "isa-55-11",
+          "ref": "Isaiah 55:11",
+          "text": {
+            "WEB": "So is my word that goes out of my mouth: it will not return to me void, but it will accomplish that which I please, and it will prosper in the thing for which I sent it.",
+            "KJV": "So shall my word be that goeth forth out of my mouth: it shall not return unto me void, but it shall accomplish that which I please, and it shall prosper in the thing whereto I sent it.",
+            "ASV": "So shall my word be that goeth forth out of my mouth: it shall not return unto me void, but it shall accomplish that which I please, and it shall prosper in the thing whereto I sent it."
+          }
+        }
+      ]
+    },
+    {
+      "book": "Jeremiah",
+      "verses": [
+        {
+          "id": "jer-29-11",
+          "ref": "Jeremiah 29:11",
+          "text": {
+            "WEB": "For I know the thoughts that I think toward you, says Yahweh, thoughts of peace, and not of evil, to give you hope and a future.",
+            "KJV": "For I know the thoughts that I think toward you, saith the LORD, thoughts of peace, and not of evil, to give you an expected end.",
+            "ASV": "For I know the thoughts that I think toward you, saith Jehovah, thoughts of peace, and not of evil, to give you hope and a future."
+          }
+        },
+        {
+          "id": "jer-33-3",
+          "ref": "Jeremiah 33:3",
+          "text": {
+            "WEB": "Call to me, and I will answer you, and will show you great and difficult things, which you don't know.",
+            "KJV": "Call unto me, and I will answer thee, and shew thee great and mighty things, which thou knowest not.",
+            "ASV": "Call unto me, and I will answer thee, and will show thee great things, and difficult, which thou knowest not."
+          }
+        }
+      ]
+    },
+    {
+      "book": "Lamentations",
+      "verses": [
+        {
+          "id": "lam-3-22",
+          "ref": "Lamentations 3:22-23",
+          "text": {
+            "WEB": "It is because of Yahweh's loving kindnesses that we are not consumed, because his compassion doesn't fail. They are new every morning. Great is your faithfulness.",
+            "KJV": "It is of the LORD's mercies that we are not consumed, because his compassions fail not. They are new every morning: great is thy faithfulness.",
+            "ASV": "It is of Jehovah's lovingkindnesses that we are not consumed, because his compassions fail not. They are new every morning; great is thy faithfulness."
+          }
+        }
+      ]
+    },
+    {
+      "book": "Micah",
+      "verses": [
+        {
+          "id": "mic-6-8",
+          "ref": "Micah 6:8",
+          "text": {
+            "WEB": "He has shown you, O man, what is good. What does Yahweh require of you, but to act justly, to love mercy, and to walk humbly with your God?",
+            "KJV": "He hath shewed thee, O man, what is good; and what doth the LORD require of thee, but to do justly, and to love mercy, and to walk humbly with thy God?",
+            "ASV": "He hath showed thee, O man, what is good; and what doth Jehovah require of thee, but to do justly, and to love kindness, and to walk humbly with thy God?"
+          }
+        }
+      ]
+    },
+    {
+      "book": "Matthew",
+      "verses": [
+        {
+          "id": "mat-5-14",
+          "ref": "Matthew 5:14-16",
+          "text": {
+            "WEB": "You are the light of the world. A city located on a hill can't be hidden. Even so, let your light shine before men, that they may see your good works and glorify your Father who is in heaven.",
+            "KJV": "Ye are the light of the world. A city that is set on an hill cannot be hid. Let your light so shine before men, that they may see your good works, and glorify your Father which is in heaven.",
+            "ASV": "Ye are the light of the world. A city set on a hill cannot be hid. Even so let your light shine before men; that they may see your good works, and glorify your Father who is in heaven."
+          }
+        },
+        {
+          "id": "mat-6-33",
+          "ref": "Matthew 6:33",
+          "text": {
+            "WEB": "But seek first God's Kingdom and his righteousness; and all these things will be given to you as well.",
+            "KJV": "But seek ye first the kingdom of God, and his righteousness; and all these things shall be added unto you.",
+            "ASV": "But seek ye first his kingdom, and his righteousness; and all these things shall be added unto you."
+          }
+        },
+        {
+          "id": "mat-11-28",
+          "ref": "Matthew 11:28-29",
+          "text": {
+            "WEB": "Come to me, all you who labor and are heavily burdened, and I will give you rest. Take my yoke upon you and learn from me, for I am gentle and lowly in heart; and you will find rest for your souls.",
+            "KJV": "Come unto me, all ye that labour and are heavy laden, and I will give you rest. Take my yoke upon you, and learn of me; for I am meek and lowly in heart: and ye shall find rest unto your souls.",
+            "ASV": "Come unto me, all ye that labor and are heavy laden, and I will give you rest. Take my yoke upon you, and learn of me; for I am meek and lowly in heart: and ye shall find rest unto your souls."
+          }
+        },
+        {
+          "id": "mat-19-14",
+          "ref": "Matthew 19:14",
+          "text": {
+            "WEB": "But Jesus said, \"Allow the little children, and don't forbid them to come to me; for the Kingdom of Heaven belongs to ones like these.\"",
+            "KJV": "But Jesus said, Suffer little children, and forbid them not, to come unto me: for of such is the kingdom of heaven.",
+            "ASV": "But Jesus said, Suffer the little children, and forbid them not, to come unto me: for to such belongeth the kingdom of heaven."
+          }
+        },
+        {
+          "id": "mat-28-19",
+          "ref": "Matthew 28:19-20",
+          "text": {
+            "WEB": "Go and make disciples of all nations, baptizing them in the name of the Father and of the Son and of the Holy Spirit, teaching them to observe all things that I commanded you. Behold, I am with you always, even to the end of the age.",
+            "KJV": "Go ye therefore, and teach all nations, baptizing them in the name of the Father, and of the Son, and of the Holy Ghost: Teaching them to observe all things whatsoever I have commanded you: and, lo, I am with you alway, even unto the end of the world.",
+            "ASV": "Go ye therefore, and make disciples of all the nations, baptizing them into the name of the Father and of the Son and of the Holy Spirit: teaching them to observe all things whatsoever I commanded you: and lo, I am with you always, even unto the end of the world."
+          }
+        }
+      ]
+    },
+    {
+      "book": "Mark",
+      "verses": [
+        {
+          "id": "mar-9-23",
+          "ref": "Mark 9:23",
+          "text": {
+            "WEB": "Jesus said to him, \"If you can believe, all things are possible to him who believes.\"",
+            "KJV": "Jesus said unto him, If thou canst believe, all things are possible to him that believeth.",
+            "ASV": "And Jesus said unto him, If thou canst! All things are possible to him that believeth."
+          }
+        },
+        {
+          "id": "mar-11-24",
+          "ref": "Mark 11:24",
+          "text": {
+            "WEB": "Therefore I tell you, all things whatever you pray and ask for, believe that you have received them, and you shall have them.",
+            "KJV": "Therefore I say unto you, What things soever ye desire, when ye pray, believe that ye receive them, and ye shall have them.",
+            "ASV": "Therefore I say unto you, All things whatsoever ye pray and ask for, believe that ye have received them, and ye shall have them."
+          }
+        }
+      ]
+    },
+    {
+      "book": "Luke",
+      "verses": [
+        {
+          "id": "luk-1-37",
+          "ref": "Luke 1:37",
+          "text": {
+            "WEB": "For nothing spoken by God is impossible.",
+            "KJV": "For with God nothing shall be impossible.",
+            "ASV": "For no word from God shall be void of power."
+          }
+        },
+        {
+          "id": "luk-2-11",
+          "ref": "Luke 2:11",
+          "text": {
+            "WEB": "For there is born to you today, in David's city, a Savior, who is Christ the Lord.",
+            "KJV": "For unto you is born this day in the city of David a Saviour, which is Christ the Lord.",
+            "ASV": "for there is born to you this day in the city of David a Saviour, who is Christ the Lord."
+          }
+        },
+        {
+          "id": "luk-6-31",
+          "ref": "Luke 6:31",
+          "text": {
+            "WEB": "As you would like people to do to you, do exactly so to them.",
+            "KJV": "And as ye would that men should do to you, do ye also to them likewise.",
+            "ASV": "And as ye would that men should do to you, do ye also to them likewise."
+          }
+        }
+      ]
+    },
+    {
+      "book": "John",
+      "verses": [
+        {
+          "id": "joh-1-1",
+          "ref": "John 1:1",
+          "text": {
+            "WEB": "In the beginning was the Word, and the Word was with God, and the Word was God.",
+            "KJV": "In the beginning was the Word, and the Word was with God, and the Word was God.",
+            "ASV": "In the beginning was the Word, and the Word was with God, and the Word was God."
+          }
+        },
+        {
+          "id": "joh-3-16",
+          "ref": "John 3:16",
+          "text": {
+            "WEB": "For God so loved the world, that he gave his one and only Son, that whoever believes in him should not perish, but have eternal life.",
+            "KJV": "For God so loved the world, that he gave his only begotten Son, that whosoever believeth in him should not perish, but have everlasting life.",
+            "ASV": "For God so loved the world, that he gave his only begotten Son, that whosoever believeth on him should not perish, but have eternal life."
+          }
+        },
+        {
+          "id": "joh-8-12",
+          "ref": "John 8:12",
+          "text": {
+            "WEB": "I am the light of the world. He who follows me will not walk in the darkness, but will have the light of life.",
+            "KJV": "I am the light of the world: he that followeth me shall not walk in darkness, but shall have the light of life.",
+            "ASV": "I am the light of the world: he that followeth me shall not walk in the darkness, but shall have the light of life."
+          }
+        },
+        {
+          "id": "joh-10-10",
+          "ref": "John 10:10",
+          "text": {
+            "WEB": "I came that they may have life, and may have it abundantly.",
+            "KJV": "I am come that they might have life, and that they might have it more abundantly.",
+            "ASV": "I came that they may have life, and may have it abundantly."
+          }
+        },
+        {
+          "id": "joh-14-6",
+          "ref": "John 14:6",
+          "text": {
+            "WEB": "Jesus said to him, \"I am the way, the truth, and the life. No one comes to the Father, except through me.\"",
+            "KJV": "Jesus saith unto him, I am the way, the truth, and the life: no man cometh unto the Father, but by me.",
+            "ASV": "Jesus saith unto him, I am the way, and the truth, and the life: no one cometh unto the Father, but by me."
+          }
+        },
+        {
+          "id": "joh-15-5",
+          "ref": "John 15:5",
+          "text": {
+            "WEB": "I am the vine. You are the branches. He who remains in me and I in him bears much fruit, for apart from me you can do nothing.",
+            "KJV": "I am the vine, ye are the branches: He that abideth in me, and I in him, the same bringeth forth much fruit: for without me ye can do nothing.",
+            "ASV": "I am the vine, ye are the branches: He that abideth in me, and I in him, the same beareth much fruit: for apart from me ye can do nothing."
+          }
+        },
+        {
+          "id": "joh-16-33",
+          "ref": "John 16:33",
+          "text": {
+            "WEB": "I have told you these things, that in me you may have peace. In the world you have trouble; but cheer up! I have overcome the world.",
+            "KJV": "These things I have spoken unto you, that in me ye might have peace. In the world ye shall have tribulation: but be of good cheer; I have overcome the world.",
+            "ASV": "These things have I spoken unto you, that in me ye may have peace. In the world ye have tribulation: but be of good cheer; I have overcome the world."
+          }
+        }
+      ]
+    },
+    {
+      "book": "Acts",
+      "verses": [
+        {
+          "id": "act-1-8",
+          "ref": "Acts 1:8",
+          "text": {
+            "WEB": "But you will receive power when the Holy Spirit has come upon you. You will be witnesses to me in Jerusalem, in all Judea and Samaria, and to the uttermost parts of the earth.",
+            "KJV": "But ye shall receive power, after that the Holy Ghost is come upon you: and ye shall be witnesses unto me both in Jerusalem, and in all Judaea, and in Samaria, and unto the uttermost part of the earth.",
+            "ASV": "But ye shall receive power, when the Holy Spirit is come upon you: and ye shall be my witnesses both in Jerusalem, and in all Judaea and Samaria, and unto the uttermost part of the earth."
+          }
+        },
+        {
+          "id": "act-4-12",
+          "ref": "Acts 4:12",
+          "text": {
+            "WEB": "There is salvation in none other, for neither is there any other name under heaven that is given among men, in which we must be saved!",
+            "KJV": "Neither is there salvation in any other: for there is none other name under heaven given among men, whereby we must be saved.",
+            "ASV": "And in none other is there salvation: for neither is there any other name under heaven, that is given among men, wherein we must be saved."
+          }
+        }
+      ]
+    },
+    {
+      "book": "Romans",
+      "verses": [
+        {
+          "id": "rom-5-8",
+          "ref": "Romans 5:8",
+          "text": {
+            "WEB": "But God shows his own love for us, in that while we were yet sinners, Christ died for us.",
+            "KJV": "But God commendeth his love toward us, in that, while we were yet sinners, Christ died for us.",
+            "ASV": "But God commendeth his own love toward us, in that, while we were yet sinners, Christ died for us."
+          }
+        },
+        {
+          "id": "rom-6-23",
+          "ref": "Romans 6:23",
+          "text": {
+            "WEB": "For the wages of sin is death, but the free gift of God is eternal life in Christ Jesus our Lord.",
+            "KJV": "For the wages of sin is death; but the gift of God is eternal life through Jesus Christ our Lord.",
+            "ASV": "For the wages of sin is death; but the free gift of God is eternal life in Christ Jesus our Lord."
+          }
+        },
+        {
+          "id": "rom-8-28",
+          "ref": "Romans 8:28",
+          "text": {
+            "WEB": "We know that all things work together for good for those who love God, for those who are called according to his purpose.",
+            "KJV": "And we know that all things work together for good to them that love God, to them who are the called according to his purpose.",
+            "ASV": "And we know that to them that love God all things work together for good, even to them that are called according to his purpose."
+          }
+        },
+        {
+          "id": "rom-8-38",
+          "ref": "Romans 8:38-39",
+          "text": {
+            "WEB": "For I am persuaded that neither death, nor life, nor angels, nor principalities, nor things present, nor things to come, nor powers, nor height, nor depth, nor any other created thing will be able to separate us from God's love which is in Christ Jesus our Lord.",
+            "KJV": "For I am persuaded, that neither death, nor life, nor angels, nor principalities, nor powers, nor things present, nor things to come, nor height, nor depth, nor any other creature, shall be able to separate us from the love of God, which is in Christ Jesus our Lord.",
+            "ASV": "For I am persuaded, that neither death, nor life, nor angels, nor principalities, nor things present, nor things to come, nor powers, nor height, nor depth, nor any other creature, shall be able to separate us from the love of God, which is in Christ Jesus our Lord."
+          }
+        },
+        {
+          "id": "rom-10-9",
+          "ref": "Romans 10:9",
+          "text": {
+            "WEB": "If you will confess with your mouth that Jesus is Lord, and believe in your heart that God raised him from the dead, you will be saved.",
+            "KJV": "That if thou shalt confess with thy mouth the Lord Jesus, and shalt believe in thine heart that God hath raised him from the dead, thou shalt be saved.",
+            "ASV": "because if thou shalt confess with thy mouth Jesus as Lord, and shalt believe in thy heart that God raised him from the dead, thou shalt be saved."
+          }
+        },
+        {
+          "id": "rom-12-2",
+          "ref": "Romans 12:2",
+          "text": {
+            "WEB": "Don't be conformed to this world, but be transformed by the renewing of your mind, so that you may prove what is the good, well-pleasing, and perfect will of God.",
+            "KJV": "And be not conformed to this world: but be ye transformed by the renewing of your mind, that ye may prove what is that good, and acceptable, and perfect, will of God.",
+            "ASV": "And be not fashioned according to this world: but be ye transformed by the renewing of your mind, that ye may prove what is the good and acceptable and perfect will of God."
+          }
+        }
+      ]
+    },
+    {
+      "book": "1 Corinthians",
+      "verses": [
+        {
+          "id": "1co-10-13",
+          "ref": "1 Corinthians 10:13",
+          "text": {
+            "WEB": "No temptation has taken you except what is common to man. God is faithful, who will not allow you to be tempted above what you are able, but will with the temptation also make the way of escape.",
+            "KJV": "There hath no temptation taken you but such as is common to man: but God is faithful, who will not suffer you to be tempted above that ye are able; but will with the temptation also make a way to escape.",
+            "ASV": "There hath no temptation taken you but such as man can bear: but God is faithful, who will not suffer you to be tempted above that ye are able; but will with the temptation make also the way of escape."
+          }
+        },
+        {
+          "id": "1co-13-4",
+          "ref": "1 Corinthians 13:4-5",
+          "text": {
+            "WEB": "Love is patient and is kind. Love doesn't envy. Love doesn't brag, is not proud, doesn't behave itself inappropriately, doesn't seek its own way, is not provoked, takes no account of evil.",
+            "KJV": "Charity suffereth long, and is kind; charity envieth not; charity vaunteth not itself, is not puffed up, doth not behave itself unseemly, seeketh not her own, is not easily provoked, thinketh no evil.",
+            "ASV": "Love suffereth long, and is kind; love envieth not; love vaunteth not itself, is not puffed up, doth not behave itself unseemly, seeketh not its own, is not provoked, taketh not account of evil."
+          }
+        },
+        {
+          "id": "1co-16-14",
+          "ref": "1 Corinthians 16:14",
+          "text": {
+            "WEB": "Let all that you do be done in love.",
+            "KJV": "Let all your things be done with charity.",
+            "ASV": "Let all that ye do be done in love."
+          }
+        }
+      ]
+    },
+    {
+      "book": "2 Corinthians",
+      "verses": [
+        {
+          "id": "2co-5-17",
+          "ref": "2 Corinthians 5:17",
+          "text": {
+            "WEB": "Therefore if anyone is in Christ, he is a new creation. The old things have passed away. Behold, all things have become new.",
+            "KJV": "Therefore if any man be in Christ, he is a new creature: old things are passed away; behold, all things are become new.",
+            "ASV": "Wherefore if any man is in Christ, he is a new creature: the old things are passed away; behold, they are become new."
+          }
+        },
+        {
+          "id": "2co-12-9",
+          "ref": "2 Corinthians 12:9",
+          "text": {
+            "WEB": "He has said to me, \"My grace is sufficient for you, for my power is made perfect in weakness.\"",
+            "KJV": "And he said unto me, My grace is sufficient for thee: for my strength is made perfect in weakness.",
+            "ASV": "And he hath said unto me, My grace is sufficient for thee: for my power is made perfect in weakness."
+          }
+        }
+      ]
+    },
+    {
+      "book": "Galatians",
+      "verses": [
+        {
+          "id": "gal-2-20",
+          "ref": "Galatians 2:20",
+          "text": {
+            "WEB": "I have been crucified with Christ, and it is no longer I that live, but Christ living in me.",
+            "KJV": "I am crucified with Christ: nevertheless I live; yet not I, but Christ liveth in me.",
+            "ASV": "I have been crucified with Christ; and it is no longer I that live, but Christ living in me."
+          }
+        },
+        {
+          "id": "gal-5-22",
+          "ref": "Galatians 5:22-23",
+          "text": {
+            "WEB": "But the fruit of the Spirit is love, joy, peace, patience, kindness, goodness, faith, gentleness, and self-control. Against such things there is no law.",
+            "KJV": "But the fruit of the Spirit is love, joy, peace, longsuffering, gentleness, goodness, faith, meekness, temperance: against such there is no law.",
+            "ASV": "But the fruit of the Spirit is love, joy, peace, longsuffering, kindness, goodness, faithfulness, meekness, self-control; against such there is no law."
+          }
+        }
+      ]
+    },
+    {
+      "book": "Ephesians",
+      "verses": [
+        {
+          "id": "eph-2-8",
+          "ref": "Ephesians 2:8-9",
+          "text": {
+            "WEB": "For by grace you have been saved through faith, and that not of yourselves; it is the gift of God, not of works, that no one would boast.",
+            "KJV": "For by grace are ye saved through faith; and that not of yourselves: it is the gift of God: Not of works, lest any man should boast.",
+            "ASV": "for by grace have ye been saved through faith; and that not of yourselves, it is the gift of God; not of works, that no man should glory."
+          }
+        },
+        {
+          "id": "eph-4-32",
+          "ref": "Ephesians 4:32",
+          "text": {
+            "WEB": "And be kind to one another, tenderhearted, forgiving each other, just as God also in Christ forgave you.",
+            "KJV": "And be ye kind one to another, tenderhearted, forgiving one another, even as God for Christ's sake hath forgiven you.",
+            "ASV": "and be ye kind one to another, tenderhearted, forgiving each other, even as God also in Christ forgave you."
+          }
+        },
+        {
+          "id": "eph-6-10",
+          "ref": "Ephesians 6:10-11",
+          "text": {
+            "WEB": "Finally, be strong in the Lord and in the strength of his might. Put on the whole armor of God, that you may be able to stand against the wiles of the devil.",
+            "KJV": "Finally, my brethren, be strong in the Lord, and in the power of his might. Put on the whole armour of God, that ye may be able to stand against the wiles of the devil.",
+            "ASV": "Finally, be strong in the Lord, and in the strength of his might. Put on the whole armor of God, that ye may be able to stand against the wiles of the devil."
+          }
+        }
+      ]
+    },
+    {
+      "book": "Philippians",
+      "verses": [
+        {
+          "id": "phi-1-6",
+          "ref": "Philippians 1:6",
+          "text": {
+            "WEB": "Being confident of this very thing, that he who began a good work in you will complete it until the day of Jesus Christ.",
+            "KJV": "Being confident of this very thing, that he which hath begun a good work in you will perform it until the day of Jesus Christ.",
+            "ASV": "being confident of this very thing, that he who began a good work in you will perfect it until the day of Jesus Christ."
+          }
+        },
+        {
+          "id": "phi-4-6",
+          "ref": "Philippians 4:6-7",
+          "text": {
+            "WEB": "In nothing be anxious, but in everything, by prayer and petition with thanksgiving, let your requests be made known to God. And the peace of God, which surpasses all understanding, will guard your hearts and your thoughts in Christ Jesus.",
+            "KJV": "Be careful for nothing; but in every thing by prayer and supplication with thanksgiving let your requests be made known unto God. And the peace of God, which passeth all understanding, shall keep your hearts and minds through Christ Jesus.",
+            "ASV": "In nothing be anxious; but in everything by prayer and supplication with thanksgiving let your requests be made known unto God. And the peace of God, which passeth all understanding, shall guard your hearts and your thoughts in Christ Jesus."
+          }
+        },
+        {
+          "id": "phi-4-13",
+          "ref": "Philippians 4:13",
+          "text": {
+            "WEB": "I can do all things through Christ, who strengthens me.",
+            "KJV": "I can do all things through Christ which strengtheneth me.",
+            "ASV": "I can do all things in him that strengtheneth me."
+          }
+        }
+      ]
+    },
+    {
+      "book": "Colossians",
+      "verses": [
+        {
+          "id": "col-3-23",
+          "ref": "Colossians 3:23",
+          "text": {
+            "WEB": "And whatever you do, work heartily, as for the Lord, and not for men.",
+            "KJV": "And whatsoever ye do, do it heartily, as to the Lord, and not unto men.",
+            "ASV": "whatsoever ye do, work heartily, as unto the Lord, and not unto men."
+          }
+        }
+      ]
+    },
+    {
+      "book": "1 Thessalonians",
+      "verses": [
+        {
+          "id": "1th-5-16",
+          "ref": "1 Thessalonians 5:16-18",
+          "text": {
+            "WEB": "Always rejoice. Pray without ceasing. In everything give thanks, for this is the will of God in Christ Jesus toward you.",
+            "KJV": "Rejoice evermore. Pray without ceasing. In every thing give thanks: for this is the will of God in Christ Jesus concerning you.",
+            "ASV": "Rejoice always; pray without ceasing; in everything give thanks: for this is the will of God in Christ Jesus to you-ward."
+          }
+        }
+      ]
+    },
+    {
+      "book": "1 Timothy",
+      "verses": [
+        {
+          "id": "1ti-4-12",
+          "ref": "1 Timothy 4:12",
+          "text": {
+            "WEB": "Let no man despise your youth; but be an example to those who believe, in word, in your way of life, in love, in faith, and in purity.",
+            "KJV": "Let no man despise thy youth; but be thou an example of the believers, in word, in conversation, in charity, in spirit, in faith, in purity.",
+            "ASV": "Let no man despise thy youth; but be thou an ensample to them that believe, in word, in manner of life, in love, in faith, in purity."
+          }
+        }
+      ]
+    },
+    {
+      "book": "2 Timothy",
+      "verses": [
+        {
+          "id": "2ti-1-7",
+          "ref": "2 Timothy 1:7",
+          "text": {
+            "WEB": "For God didn't give us a spirit of fear, but of power, love, and self-control.",
+            "KJV": "For God hath not given us the spirit of fear; but of power, and of love, and of a sound mind.",
+            "ASV": "For God gave us not a spirit of fearfulness; but of power and love and discipline."
+          }
+        },
+        {
+          "id": "2ti-3-16",
+          "ref": "2 Timothy 3:16",
+          "text": {
+            "WEB": "Every Scripture is God-breathed and profitable for teaching, for reproof, for correction, and for instruction in righteousness.",
+            "KJV": "All scripture is given by inspiration of God, and is profitable for doctrine, for reproof, for correction, for instruction in righteousness.",
+            "ASV": "Every scripture inspired of God is also profitable for teaching, for reproof, for correction, for instruction which is in righteousness."
+          }
+        }
+      ]
+    },
+    {
+      "book": "Hebrews",
+      "verses": [
+        {
+          "id": "heb-11-1",
+          "ref": "Hebrews 11:1",
+          "text": {
+            "WEB": "Now faith is assurance of things hoped for, proof of things not seen.",
+            "KJV": "Now faith is the substance of things hoped for, the evidence of things not seen.",
+            "ASV": "Now faith is assurance of things hoped for, a conviction of things not seen."
+          }
+        },
+        {
+          "id": "heb-12-1",
+          "ref": "Hebrews 12:1-2",
+          "text": {
+            "WEB": "Let's lay aside every weight and the sin which so easily entangles us, and let's run with perseverance the race that is set before us, looking to Jesus, the author and perfecter of faith.",
+            "KJV": "Let us lay aside every weight, and the sin which doth so easily beset us, and let us run with patience the race that is set before us, Looking unto Jesus the author and finisher of our faith.",
+            "ASV": "let us lay aside every weight, and the sin which doth so closely cling to us, and let us run with patience the race that is set before us, looking unto Jesus the author and perfecter of our faith."
+          }
+        },
+        {
+          "id": "heb-13-8",
+          "ref": "Hebrews 13:8",
+          "text": {
+            "WEB": "Jesus Christ is the same yesterday, today, and forever.",
+            "KJV": "Jesus Christ the same yesterday, and to day, and for ever.",
+            "ASV": "Jesus Christ is the same yesterday and today, yea and for ever."
+          }
+        }
+      ]
+    },
+    {
+      "book": "James",
+      "verses": [
+        {
+          "id": "jam-1-5",
+          "ref": "James 1:5",
+          "text": {
+            "WEB": "But if any of you lacks wisdom, let him ask of God, who gives to all liberally and without reproach; and it will be given to him.",
+            "KJV": "If any of you lack wisdom, let him ask of God, that giveth to all men liberally, and upbraideth not; and it shall be given him.",
+            "ASV": "But if any of you lacketh wisdom, let him ask of God, who giveth to all liberally and upbraideth not; and it shall be given him."
+          }
+        },
+        {
+          "id": "jam-4-8",
+          "ref": "James 4:8",
+          "text": {
+            "WEB": "Draw near to God, and he will draw near to you.",
+            "KJV": "Draw nigh to God, and he will draw nigh to you.",
+            "ASV": "Draw nigh to God, and he will draw nigh to you."
+          }
+        }
+      ]
+    },
+    {
+      "book": "1 Peter",
+      "verses": [
+        {
+          "id": "1pe-2-9",
+          "ref": "1 Peter 2:9",
+          "text": {
+            "WEB": "But you are a chosen race, a royal priesthood, a holy nation, a people for God's own possession, that you may proclaim the excellence of him who called you out of darkness into his marvelous light.",
+            "KJV": "But ye are a chosen generation, a royal priesthood, an holy nation, a peculiar people; that ye should shew forth the praises of him who hath called you out of darkness into his marvellous light.",
+            "ASV": "But ye are an elect race, a royal priesthood, a holy nation, a people for God's own possession, that ye may show forth the excellencies of him who called you out of darkness into his marvellous light."
+          }
+        },
+        {
+          "id": "1pe-5-7",
+          "ref": "1 Peter 5:7",
+          "text": {
+            "WEB": "Casting all your worries on him, because he cares for you.",
+            "KJV": "Casting all your care upon him; for he careth for you.",
+            "ASV": "casting all your anxiety upon him, because he careth for you."
+          }
+        }
+      ]
+    },
+    {
+      "book": "1 John",
+      "verses": [
+        {
+          "id": "1jo-1-9",
+          "ref": "1 John 1:9",
+          "text": {
+            "WEB": "If we confess our sins, he is faithful and righteous to forgive us the sins and to cleanse us from all unrighteousness.",
+            "KJV": "If we confess our sins, he is faithful and just to forgive us our sins, and to cleanse us from all unrighteousness.",
+            "ASV": "If we confess our sins, he is faithful and righteous to forgive us our sins, and to cleanse us from all unrighteousness."
+          }
+        },
+        {
+          "id": "1jo-4-19",
+          "ref": "1 John 4:19",
+          "text": {
+            "WEB": "We love him, because he first loved us.",
+            "KJV": "We love him, because he first loved us.",
+            "ASV": "We love, because he first loved us."
+          }
+        }
+      ]
+    },
+    {
+      "book": "Revelation",
+      "verses": [
+        {
+          "id": "rev-3-20",
+          "ref": "Revelation 3:20",
+          "text": {
+            "WEB": "Behold, I stand at the door and knock. If anyone hears my voice and opens the door, then I will come in to him and will dine with him, and he with me.",
+            "KJV": "Behold, I stand at the door, and knock: if any man hear my voice, and open the door, I will come in to him, and will sup with him, and he with me.",
+            "ASV": "Behold, I stand at the door and knock: if any man hear my voice and open the door, I will come in to him, and will sup with him, and he with me."
+          }
+        },
+        {
+          "id": "rev-21-4",
+          "ref": "Revelation 21:4",
+          "text": {
+            "WEB": "He will wipe away every tear from their eyes. Death will be no more; neither will there be mourning, nor crying, nor pain any more, for the first things have passed away.",
+            "KJV": "And God shall wipe away all tears from their eyes; and there shall be no more death, neither sorrow, nor crying, neither shall there be any more pain: for the former things are passed away.",
+            "ASV": "and he shall wipe away every tear from their eyes; and death shall be no more; neither shall there be mourning, nor crying, nor pain, any more: the first things are passed away."
+          }
+        }
+      ]
+    }
+  ]
+}

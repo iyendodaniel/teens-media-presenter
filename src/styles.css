@@ -1,0 +1,178 @@
+@import "tailwindcss" source(none);
+@source "../src";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+/*
+ * Design system definition.
+ *
+ * The @theme inline block maps CSS custom properties to Tailwind utility
+ * classes (e.g. --color-primary -> bg-primary, text-primary).
+ *
+ * The :root and .dark blocks define the actual color values using oklch.
+ * All colors MUST use oklch format.
+ *
+ * To add a new semantic color:
+ * 1. Add the variable to :root (light value) and .dark (dark value)
+ * 2. Register it in @theme inline as --color-<name>: var(--<name>)
+ */
+
+@theme inline {
+  --font-sans: "Barlow", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Bebas Neue", "Barlow", sans-serif;
+  --color-stage: var(--stage);
+  --color-accent-glow: var(--accent-glow);
+  --color-accent-dim: var(--accent-dim);
+  --color-accent-ink: var(--accent-ink);
+  --color-panel: var(--panel);
+  --color-panel-raised: var(--panel-raised);
+  --shadow-stage: 0 0 0 1px var(--border), 0 24px 60px -30px oklch(0 0 0 / 0.9);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 8px);
+  --radius-3xl: calc(var(--radius) + 12px);
+  --radius-4xl: calc(var(--radius) + 16px);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-ring-offset-background: var(--background);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+}
+
+/*
+ * Teens Media Presenter is a single-theme broadcast console: near-black,
+ * warm-tinted (not blue-black), one amber/gold accent standing in for
+ * "the word illuminated." There is no light theme - it runs in dim rooms
+ * next to a projector, on both the Control Panel and the Output stage.
+ */
+:root {
+  --radius: 0.625rem;
+  --background: oklch(0.141 0.003 69.4); /* #0a0908 */
+  --foreground: oklch(0.948 0.014 78.3); /* #f3ede4 */
+  --card: oklch(0.180 0.004 48.5); /* #131110 */
+  --card-foreground: oklch(0.948 0.014 78.3);
+  --popover: oklch(0.180 0.004 48.5);
+  --popover-foreground: oklch(0.948 0.014 78.3);
+  --primary: oklch(0.759 0.145 80.2); /* accent amber #e0a52c */
+  --primary-foreground: oklch(0.189 0.026 77.5); /* #1a1206 */
+  --secondary: oklch(0.216 0.006 56.0); /* #1c1917 */
+  --secondary-foreground: oklch(0.948 0.014 78.3);
+  --muted: oklch(0.216 0.006 56.0);
+  --muted-foreground: oklch(0.699 0.026 73.5); /* #a89c8d */
+  --accent: oklch(0.759 0.145 80.2);
+  --accent-foreground: oklch(0.189 0.026 77.5);
+  --destructive: oklch(0.628 0.207 25.8);
+  --destructive-foreground: oklch(0.97 0.013 78.3);
+  --border: oklch(0.277 0.009 53.1); /* #2c2724 */
+  --input: oklch(0.277 0.009 53.1);
+  --ring: oklch(0.759 0.145 80.2);
+  --chart-1: oklch(0.759 0.145 80.2);
+  --chart-2: oklch(0.6 0.118 184.704);
+  --chart-3: oklch(0.398 0.07 227.392);
+  --chart-4: oklch(0.828 0.189 84.429);
+  --chart-5: oklch(0.769 0.188 70.08);
+  --sidebar: oklch(0.180 0.004 48.5);
+  --sidebar-foreground: oklch(0.948 0.014 78.3);
+  --sidebar-primary: oklch(0.759 0.145 80.2);
+  --sidebar-primary-foreground: oklch(0.189 0.026 77.5);
+  --sidebar-accent: oklch(0.216 0.006 56.0);
+  --sidebar-accent-foreground: oklch(0.948 0.014 78.3);
+  --sidebar-border: oklch(0.277 0.009 53.1);
+  --sidebar-ring: oklch(0.759 0.145 80.2);
+
+  /* Presenter-specific tokens */
+  --stage: oklch(0.141 0.003 69.4 / 1); /* output stage: same near-black */
+  --panel: oklch(0.180 0.004 48.5); /* control panel surface */
+  --panel-raised: oklch(0.216 0.006 56.0); /* raised row / card on panel */
+  --accent-dim: oklch(0.543 0.098 84.4); /* #8a6a1f, muted accent */
+  --accent-ink: oklch(0.189 0.026 77.5); /* text drawn on accent fills */
+  --accent-glow: oklch(0.759 0.145 80.2 / 0.35);
+}
+
+@layer base {
+  * {
+    border-color: var(--color-border);
+  }
+
+  body {
+    background-color: var(--color-background);
+    color: var(--color-foreground);
+  }
+}
+
+/* ---------------------------------------------------------------------- */
+/* Presenter stage: cross-fade + connection pulse                          */
+/* ---------------------------------------------------------------------- */
+
+@layer utilities {
+  .stage-fade-enter {
+    animation: stage-fade-in 480ms ease-out both;
+  }
+
+  @keyframes stage-fade-in {
+    from {
+      opacity: 0;
+      transform: translateY(6px) scale(0.996);
+      filter: blur(2px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+      filter: blur(0);
+    }
+  }
+
+  .pulse-dot {
+    animation: pulse-dot 2.2s ease-in-out infinite;
+  }
+
+  @keyframes pulse-dot {
+    0%,
+    100% {
+      opacity: 1;
+      box-shadow: 0 0 0 0 var(--accent-glow);
+    }
+    50% {
+      opacity: 0.75;
+      box-shadow: 0 0 0 5px transparent;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .stage-fade-enter,
+    .pulse-dot {
+      animation: none !important;
+    }
+  }
+}
