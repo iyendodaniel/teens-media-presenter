@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ClipboardPaste,
   CornerDownLeft,
@@ -42,7 +42,7 @@ import {
   type MediaFitMode,
 } from "@/lib/presenter-sync";
 import { previewVerseFontSize } from "@/lib/verse-font-size";
-import { getTimerState, resetTimer, setTimerMinutes, subscribeTimer, toggleTimer } from "@/lib/timer-store";
+import { TimerWidget } from "@/components/timer-widget";
 
 export const Route = createFileRoute("/media")({
   head: () => ({
@@ -1308,121 +1308,6 @@ function MediaPanel() {
 }
 
 /* ------------------------------------------------------------------ timer */
-
-const TIMER_PRESETS = [5, 10, 15, 20, 30];
-
-/** Operator-only countdown clock for pacing the service — not sent to Output. */
-function TimerWidget() {
-  const timer = useSyncExternalStore(subscribeTimer, getTimerState, getTimerState);
-  const { totalSeconds, remaining, running } = timer;
-  const [minutesInput, setMinutesInput] = useState(() => String(Math.round(totalSeconds / 60)));
-
-  // Keep the "custom minutes" text field in sync when the duration changes
-  // from elsewhere (a preset button, or the timer restoring on mount).
-  useEffect(() => {
-    setMinutesInput(String(Math.round(totalSeconds / 60)));
-  }, [totalSeconds]);
-
-  const applyMinutes = useCallback((minutes: number) => {
-    setTimerMinutes(minutes);
-  }, []);
-
-  const toggle = useCallback(() => {
-    toggleTimer();
-  }, []);
-
-  const reset = useCallback(() => {
-    resetTimer();
-  }, []);
-
-  const mm = String(Math.floor(remaining / 60)).padStart(2, "0");
-  const ss = String(remaining % 60).padStart(2, "0");
-  const isDone = remaining === 0;
-  const isLow = remaining > 0 && remaining <= 30;
-  const pct = totalSeconds > 0 ? ((totalSeconds - remaining) / totalSeconds) * 100 : 0;
-
-  return (
-    <div
-      className={cn(
-        "flex flex-col gap-2.5 rounded-md border border-border bg-panel p-3 transition-colors",
-        isDone && "border-destructive/70 bg-destructive/10",
-      )}
-    >
-      <div
-        className={cn(
-          "flex items-center justify-center rounded-md border py-3 font-mono text-2xl tabular-nums transition-colors",
-          isDone
-            ? "timer-flash border-destructive bg-destructive/10 text-destructive"
-            : isLow
-              ? "border-destructive/60 text-destructive"
-              : "border-border text-foreground",
-        )}
-      >
-        {isDone ? "TIME'S UP" : `${mm}:${ss}`}
-      </div>
-
-      <div className="h-1 w-full overflow-hidden rounded-full bg-panel-raised">
-        <div
-          className={cn(
-            "h-full transition-[width] duration-1000",
-            isDone ? "bg-destructive" : "bg-accent",
-          )}
-          style={{ width: `${Math.min(100, pct)}%` }}
-        />
-      </div>
-
-      <div className="flex flex-wrap gap-1">
-        {TIMER_PRESETS.map((m) => (
-          <button
-            key={m}
-            onClick={() => applyMinutes(m)}
-            className="rounded px-1.5 py-1 text-[10px] font-semibold text-muted-foreground transition-colors hover:bg-panel-raised hover:text-foreground"
-          >
-            {m}m
-          </button>
-        ))}
-      </div>
-
-      <div className="flex items-center gap-1.5">
-        <input
-          value={minutesInput}
-          onChange={(e) => setMinutesInput(e.target.value.replace(/[^0-9]/g, ""))}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") applyMinutes(Number.parseInt(minutesInput, 10) || 0);
-          }}
-          inputMode="numeric"
-          aria-label="Custom minutes"
-          placeholder="Min"
-          className="w-full min-w-0 rounded-md border border-input bg-background px-2 py-1 text-xs placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-        />
-        <button
-          onClick={() => applyMinutes(Number.parseInt(minutesInput, 10) || 0)}
-          className="shrink-0 rounded-md border border-border bg-panel px-2 py-1 text-[10px] text-foreground transition-colors hover:bg-panel-raised"
-        >
-          Set
-        </button>
-      </div>
-
-      <div className="flex gap-1.5">
-        <button
-          onClick={toggle}
-          disabled={remaining <= 0}
-          className="flex flex-1 items-center justify-center gap-1 rounded-md bg-accent py-1.5 text-xs font-semibold text-accent-ink transition-opacity hover:opacity-90 disabled:opacity-40"
-        >
-          {running ? <Pause className="h-3 w-3" /> : <Play className="h-3 w-3" />}
-          {running ? "Pause" : "Start"}
-        </button>
-        <button
-          onClick={reset}
-          aria-label="Reset timer"
-          className="flex items-center justify-center gap-1 rounded-md border border-border bg-panel px-2.5 py-1.5 text-xs text-foreground transition-colors hover:bg-panel-raised"
-        >
-          <RotateCcw className="h-3 w-3" />
-        </button>
-      </div>
-    </div>
-  );
-}
 
 function LiveMirror({
   live,
