@@ -10,12 +10,18 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as LyricsRouteImport } from './routes/lyrics'
 import { Route as MediaRouteImport } from './routes/media'
 import { Route as OutputRouteImport } from './routes/output'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LyricsRoute = LyricsRouteImport.update({
+  id: '/lyrics',
+  path: '/lyrics',
   getParentRoute: () => rootRouteImport,
 } as any)
 const MediaRoute = MediaRouteImport.update({
@@ -31,30 +37,34 @@ const OutputRoute = OutputRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/lyrics': typeof LyricsRoute
   '/media': typeof MediaRoute
   '/output': typeof OutputRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/lyrics': typeof LyricsRoute
   '/media': typeof MediaRoute
   '/output': typeof OutputRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/lyrics': typeof LyricsRoute
   '/media': typeof MediaRoute
   '/output': typeof OutputRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/media' | '/output'
+  fullPaths: '/' | '/lyrics' | '/media' | '/output'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/media' | '/output'
-  id: '__root__' | '/' | '/media' | '/output'
+  to: '/' | '/lyrics' | '/media' | '/output'
+  id: '__root__' | '/' | '/lyrics' | '/media' | '/output'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  LyricsRoute: typeof LyricsRoute
   MediaRoute: typeof MediaRoute
   OutputRoute: typeof OutputRoute
 }
@@ -66,6 +76,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/lyrics': {
+      id: '/lyrics'
+      path: '/lyrics'
+      fullPath: '/lyrics'
+      preLoaderRoute: typeof LyricsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/media': {
@@ -87,6 +104,7 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  LyricsRoute: LyricsRoute,
   MediaRoute: MediaRoute,
   OutputRoute: OutputRoute,
 }

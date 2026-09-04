@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ClipboardPaste,
+  Copy,
   CornerDownLeft,
   Film,
   FolderOpen,
@@ -34,6 +35,7 @@ import { useSplitRatio } from "@/hooks/use-split-ratio";
 import { MediaStage, fitClass } from "@/components/media/media-stage";
 import { createLinkedItem, formatDuration, searchMedia, type MediaItem } from "@/lib/media-library";
 import { parseOrderOfService } from "@/lib/order-of-service";
+import { isLiveCapable, liveStateForServiceItem } from "@/lib/service";
 import type { FolderEntry } from "@/lib/media-folder";
 import {
   DEFAULT_FONT_SCALE,
@@ -555,13 +557,33 @@ function MediaPanel() {
   );
 
   /* --- order of service ---------------------------------------------------- */
-  const importOrderOfService = useCallback(() => {
-    const parsed = parseOrderOfService(orderText, library.items);
-    if (parsed.length === 0) return;
-    service.replace(parsed);
-    setOrderOpen(false);
-    setOrderText("");
-  }, [orderText, library.items, service]);
+  const importOrderOfService = useCallback(
+    (mode: "append" | "replace") => {
+      const parsed = parseOrderOfService(orderText, library.items);
+      if (parsed.length === 0) return;
+      if (mode === "replace") service.replace(parsed);
+      else service.append(parsed);
+      setOrderOpen(false);
+      setOrderText("");
+    },
+    [orderText, library.items, service],
+  );
+
+  /* --- service item go-live ------------------------------------------------ */
+  const goLiveServiceItem = useCallback(
+    (entry: (typeof service.items)[number]) => {
+      if (entry.type === "image" || entry.type === "video" || entry.type === "gif") {
+        const item = entry.mediaId ? library.items.find((m) => m.id === entry.mediaId) : undefined;
+        if (item) selectItem(item);
+        return;
+      }
+      const state = liveStateForServiceItem(entry);
+      if (state) push(state);
+    },
+    [library.items, selectItem, push],
+  );
+
+  const [dragServiceId, setDragServiceId] = useState<string | null>(null);
 
   /* --- overlay dismissal ------------------------------------------------- */
   useEffect(() => {
@@ -684,7 +706,9 @@ function MediaPanel() {
         ? "Black screen"
         : live.mode === "scripture"
           ? live.reference
-          : "Nothing live";
+          : live.mode === "song"
+            ? `${live.title} - ${live.section}`
+            : "Nothing live";
 
   return (
     <div className="flex h-screen flex-col bg-background text-foreground">
@@ -703,6 +727,12 @@ function MediaPanel() {
             <span className="rounded bg-accent px-2.5 py-1 font-semibold text-accent-ink">
               Media
             </span>
+            <Link
+              to="/lyrics"
+              className="rounded px-2.5 py-1 text-muted-foreground transition-colors hover:bg-panel hover:text-foreground"
+            >
+              Lyrics
+            </Link>
           </nav>
         </div>
         <div className="flex shrink-0 items-center gap-2 rounded-full border border-border bg-panel px-3 py-1.5 text-xs">
@@ -993,17 +1023,38 @@ function MediaPanel() {
                 </div>
                 <ol className="flex flex-col">
                   {service.items.map((entry, i) => {
-                    const item = entry.mediaId
-                      ? library.items.find((m) => m.id === entry.mediaId)
-                      : undefined;
+                    const live = isLiveCapable(entry);
                     return (
-                      <li key={entry.id} className="group flex items-center gap-2">
+                      <li
+                        key={entry.id}
+                        draggable
+                        onDragStart={() => setDragServiceId(entry.id)}
+                        onDragOver={(e) => e.preventDefault()}
+                        onDrop={(e) => {
+                          e.preventDefault();
+                          if (dragServiceId && dragServiceId !== entry.id) {
+                            service.reorder(dragServiceId, entry.id);
+                          }
+                          setDragServiceId(null);
+                        }}
+                        onDragEnd={() => setDragServiceId(null)}
+                        className={cn(
+                          "group flex items-center gap-1 rounded",
+                          dragServiceId === entry.id && "opacity-50",
+                        )}
+                      >
+                        <span
+                          className="cursor-grab select-none px-0.5 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100 active:cursor-grabbing"
+                          aria-hidden
+                        >
+                          ⠿
+                        </span>
                         <button
-                          onClick={() => item && selectItem(item)}
-                          disabled={!item}
+                          onClick={() => goLiveServiceItem(entry)}
+                          disabled={!live}
                           className={cn(
                             "flex min-w-0 flex-1 items-center gap-2 rounded px-2 py-1.5 text-left text-xs transition-colors",
-                            item
+                            live
                               ? "text-foreground hover:bg-panel-raised"
                               : "cursor-default text-muted-foreground",
                           )}
@@ -1012,6 +1063,13 @@ function MediaPanel() {
                             {String(i + 1).padStart(2, "0")}
                           </span>
                           <span className="truncate">{entry.label}</span>
+                        </button>
+                        <button
+                          onClick={() => service.duplicate(entry.id)}
+                          aria-label={`Duplicate ${entry.label}`}
+                          className="opacity-0 transition-opacity hover:text-foreground group-hover:opacity-100"
+                        >
+                          <Copy className="h-3.5 w-3.5" />
                         </button>
                         <button
                           onClick={() => service.remove(entry.id)}
@@ -1274,7 +1332,8 @@ function MediaPanel() {
             <p className="text-xs text-muted-foreground">
               One line per item. Numbering is optional. Lines that match a filename in your media
               library (e.g. "05 Announcement.mp4") are linked automatically - everything else
-              becomes a plain note, same as adding one by hand. This replaces the current list.
+              becomes a plain note, same as adding one by hand. Adds to the end of the current
+              list by default; use "Replace service" to start over instead.
             </p>
             <textarea
               value={orderText}
@@ -1293,11 +1352,18 @@ function MediaPanel() {
                 Cancel
               </button>
               <button
-                onClick={importOrderOfService}
+                onClick={() => importOrderOfService("replace")}
+                disabled={!orderText.trim()}
+                className="rounded-md border border-border bg-panel px-3 py-1.5 text-xs font-semibold text-foreground transition-colors hover:bg-panel-raised disabled:opacity-40"
+              >
+                Replace service
+              </button>
+              <button
+                onClick={() => importOrderOfService("append")}
                 disabled={!orderText.trim()}
                 className="rounded-md bg-accent px-3 py-1.5 text-xs font-semibold text-accent-ink transition-opacity hover:opacity-90 disabled:opacity-40"
               >
-                Replace service
+                Add to service
               </button>
             </div>
           </div>
@@ -1316,13 +1382,13 @@ function LiveMirror({
   live: LiveState;
   onTime: (current: number, duration: number) => void;
 }) {
-  const background = live.mode === "scripture" ? live.background : undefined;
+  const background = live.mode === "scripture" || live.mode === "song" ? live.background : undefined;
   const backgroundUrl = useResolvedUrl(background?.mediaId, background?.src);
 
   if (live.mode === "image" || live.mode === "video") {
     return <MediaStage state={live} forceMuted onTime={onTime} />;
   }
-  if (live.mode === "scripture") {
+  if (live.mode === "scripture" || live.mode === "song") {
     return (
       <div className="relative flex h-full w-full flex-col items-center justify-center gap-[3cqw] px-[6cqw] py-[6cqw] text-center">
         {backgroundUrl ? (
@@ -1336,7 +1402,7 @@ function LiveMirror({
           </>
         ) : null}
         <p
-          className="relative z-10 max-w-[92%] font-medium leading-[1.35] text-foreground"
+          className="relative z-10 max-w-[92%] whitespace-pre-line font-medium leading-[1.35] text-foreground"
           style={{
             fontSize: previewVerseFontSize(live.text.length, live.fontScale ?? DEFAULT_FONT_SCALE),
             fontFamily: fontFamilyFor(live.fontFamily),
@@ -1348,7 +1414,7 @@ function LiveMirror({
           className="relative z-10 font-display text-accent"
           style={{ fontSize: "clamp(0.55rem, 2cqw, 1.1rem)", letterSpacing: "0.04em" }}
         >
-          {live.reference}
+          {live.mode === "scripture" ? live.reference : `${live.title} - ${live.section}`}
         </p>
       </div>
     );

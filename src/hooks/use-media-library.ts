@@ -9,6 +9,15 @@ import {
 } from "@/lib/media-library";
 import { resolveBlobUrl } from "@/lib/media-store";
 import {
+  loadSongs,
+  newSong as createNewSong,
+  newSongSection,
+  saveSongs,
+  subscribeSongs,
+  type Song,
+  type SongSection,
+} from "@/lib/songs";
+import {
   loadService,
   newServiceId,
   saveService,
@@ -168,11 +177,113 @@ export function useService() {
     saveService(next);
   }, []);
 
-  /** Wholesale swap - used by the "Paste order of service" import. */
+  const duplicate = useCallback((id: string) => {
+    const current = loadService();
+    const idx = current.findIndex((i) => i.id === id);
+    if (idx === -1) return;
+    const copy = { ...current[idx]!, id: newServiceId() };
+    const next = [...current.slice(0, idx + 1), copy, ...current.slice(idx + 1)];
+    setItems(next);
+    saveService(next);
+  }, []);
+
+  const reorder = useCallback((fromId: string, toId: string) => {
+    const current = loadService();
+    const fromIdx = current.findIndex((i) => i.id === fromId);
+    const toIdx = current.findIndex((i) => i.id === toId);
+    if (fromIdx === -1 || toIdx === -1 || fromIdx === toIdx) return;
+    const next = [...current];
+    const [moved] = next.splice(fromIdx, 1);
+    next.splice(toIdx, 0, moved!);
+    setItems(next);
+    saveService(next);
+  }, []);
+
+  /** Appends new items to the end of the current list - the default for pasting an order of service. */
+  const append = useCallback((newItems: ServiceItem[]) => {
+    const next = [...loadService(), ...newItems];
+    setItems(next);
+    saveService(next);
+  }, []);
+
+  /** Wholesale swap - the explicit "replace entire service" action. */
   const replace = useCallback((next: ServiceItem[]) => {
     setItems(next);
     saveService(next);
   }, []);
 
-  return { items, add, remove, replace };
+  return { items, add, remove, duplicate, reorder, append, replace };
+}
+
+export function useSongs() {
+  const [songs, setSongs] = useState<Song[]>([]);
+
+  useEffect(() => {
+    setSongs(loadSongs());
+    return subscribeSongs(() => setSongs(loadSongs()));
+  }, []);
+
+  const create = useCallback((title: string) => {
+    const song = createNewSong(title);
+    const next = [song, ...loadSongs()];
+    setSongs(next);
+    saveSongs(next);
+    return song;
+  }, []);
+
+  const update = useCallback((id: string, patch: Partial<Omit<Song, "id">>) => {
+    const next = loadSongs().map((s) => (s.id === id ? { ...s, ...patch } : s));
+    setSongs(next);
+    saveSongs(next);
+  }, []);
+
+  const remove = useCallback((id: string) => {
+    const next = loadSongs().filter((s) => s.id !== id);
+    setSongs(next);
+    saveSongs(next);
+  }, []);
+
+  const markUsed = useCallback((id: string) => {
+    const next = loadSongs().map((s) => (s.id === id ? { ...s, lastUsedAt: Date.now() } : s));
+    setSongs(next);
+    saveSongs(next);
+  }, []);
+
+  const addSection = useCallback((songId: string, label?: string) => {
+    const section: SongSection = newSongSection(label);
+    const next = loadSongs().map((s) =>
+      s.id === songId ? { ...s, sections: [...s.sections, section] } : s,
+    );
+    setSongs(next);
+    saveSongs(next);
+    return section;
+  }, []);
+
+  const updateSection = useCallback(
+    (songId: string, sectionId: string, patch: Partial<Omit<SongSection, "id">>) => {
+      const next = loadSongs().map((s) =>
+        s.id === songId
+          ? {
+              ...s,
+              sections: s.sections.map((sec) =>
+                sec.id === sectionId ? { ...sec, ...patch } : sec,
+              ),
+            }
+          : s,
+      );
+      setSongs(next);
+      saveSongs(next);
+    },
+    [],
+  );
+
+  const removeSection = useCallback((songId: string, sectionId: string) => {
+    const next = loadSongs().map((s) =>
+      s.id === songId ? { ...s, sections: s.sections.filter((sec) => sec.id !== sectionId) } : s,
+    );
+    setSongs(next);
+    saveSongs(next);
+  }, []);
+
+  return { songs, create, update, remove, markUsed, addSection, updateSection, removeSection };
 }

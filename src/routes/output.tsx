@@ -14,7 +14,8 @@ export const Route = createFileRoute("/output")({
 
 function OutputPage() {
   const live = useOutput();
-  const background = live.mode === "scripture" ? live.background : undefined;
+  const background =
+    live.mode === "scripture" || live.mode === "song" ? live.background : undefined;
   const backgroundUrl = useResolvedUrl(background?.mediaId, background?.src);
 
   if (live.mode === "image" || live.mode === "video") {
@@ -27,7 +28,7 @@ function OutputPage() {
 
   return (
     <div className="fixed inset-0 overflow-hidden bg-stage">
-      {live.mode === "scripture" ? (
+      {live.mode === "scripture" || live.mode === "song" ? (
         <div
           key={live.revision}
           className="stage-fade-enter relative flex h-full w-full flex-col items-center justify-center gap-10 px-[6vw] py-[6vh] text-center"
@@ -44,7 +45,7 @@ function OutputPage() {
           ) : null}
           <div className="relative z-10 flex flex-col items-center gap-10">
             <p
-              className="max-w-[86vw] font-medium leading-[1.35] text-foreground"
+              className="max-w-[86vw] whitespace-pre-line font-medium leading-[1.35] text-foreground"
               style={{
                 fontSize: verseFontSize(live.text.length, live.fontScale ?? DEFAULT_FONT_SCALE),
                 fontFamily: fontFamilyFor(live.fontFamily),
@@ -59,10 +60,21 @@ function OutputPage() {
                 letterSpacing: "0.04em",
               }}
             >
-              {live.reference}
-              <span className="ml-3 align-middle text-[0.55em] text-accent-dim">
-                {live.translation}
-              </span>
+              {live.mode === "scripture" ? (
+                <>
+                  {live.reference}
+                  <span className="ml-3 align-middle text-[0.55em] text-accent-dim">
+                    {live.translation}
+                  </span>
+                </>
+              ) : (
+                <>
+                  {live.title}
+                  <span className="ml-3 align-middle text-[0.55em] text-accent-dim">
+                    {live.section}
+                  </span>
+                </>
+              )}
             </p>
           </div>
         </div>

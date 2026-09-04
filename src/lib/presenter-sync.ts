@@ -78,6 +78,19 @@ export type LiveState =
       fontScale?: number | undefined;
       /** Which of SCRIPTURE_FONTS to render the verse text in. Defaults to "sans". */
       fontFamily?: ScriptureFontKey | undefined;
+    }
+  | {
+      mode: "song";
+      revision: number;
+      songId: string;
+      title: string;
+      /** Section label, e.g. "Verse 1", "Chorus". */
+      section: string;
+      text: string;
+      /** Optional background image behind the lyrics, same shape as scripture. */
+      background?: { mediaId: string; src?: string | undefined } | undefined;
+      fontScale?: number | undefined;
+      fontFamily?: ScriptureFontKey | undefined;
     };
 
 export type SyncMessage =
@@ -103,7 +116,7 @@ export function readPersistedState(): LiveState {
     const raw = window.localStorage.getItem(STATE_KEY);
     if (!raw) return INITIAL_STATE;
     const parsed = JSON.parse(raw) as LiveState;
-    const modes = ["blank", "black", "scripture", "image", "video"];
+    const modes = ["blank", "black", "scripture", "song", "image", "video"];
     if (parsed && modes.includes(parsed.mode)) return parsed;
   } catch {
     /* ignore */

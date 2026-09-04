@@ -24,7 +24,7 @@ import {
   type Verse,
 } from "@/lib/scriptures";
 import { buildSuggestions, type Suggestion } from "@/lib/search-suggestions";
-import { useMediaLibrary, useMediaUrl, useResolvedUrl } from "@/hooks/use-media-library";
+import { useMediaLibrary, useMediaUrl, useResolvedUrl, useService } from "@/hooks/use-media-library";
 import { MediaStage } from "@/components/media/media-stage";
 import type { MediaItem } from "@/lib/media-library";
 import { previewVerseFontSize } from "@/lib/verse-font-size";
@@ -58,7 +58,7 @@ export const Route = createFileRoute("/")({
  * preview must never go stale just because the operator switched sections.
  */
 function PreviewStage({ live }: { live: LiveState }) {
-  const background = live.mode === "scripture" ? live.background : undefined;
+  const background = live.mode === "scripture" || live.mode === "song" ? live.background : undefined;
   const backgroundUrl = useResolvedUrl(background?.mediaId, background?.src);
 
   if (live.mode === "image" || live.mode === "video") {
@@ -74,7 +74,7 @@ function PreviewStage({ live }: { live: LiveState }) {
       className="relative aspect-video w-full overflow-hidden rounded-lg bg-stage shadow-stage"
       style={{ containerType: "inline-size" }}
     >
-      {live.mode === "scripture" ? (
+      {live.mode === "scripture" || live.mode === "song" ? (
         <div
           key={live.revision}
           className="stage-fade-enter absolute inset-0 flex flex-col items-center justify-center gap-[3cqw] px-[6cqw] py-[6cqw] text-center"
@@ -91,7 +91,7 @@ function PreviewStage({ live }: { live: LiveState }) {
           ) : null}
           <div className="relative z-10 flex flex-col items-center gap-[3cqw]">
             <p
-              className="max-w-[92%] font-medium leading-[1.35] text-foreground"
+              className="max-w-[92%] whitespace-pre-line font-medium leading-[1.35] text-foreground"
               style={{
                 fontSize: previewVerseFontSize(
                   live.text.length,
@@ -106,10 +106,21 @@ function PreviewStage({ live }: { live: LiveState }) {
               className="font-display text-accent"
               style={{ fontSize: "clamp(0.55rem, 2cqw, 1.1rem)", letterSpacing: "0.04em" }}
             >
-              {live.reference}
-              <span className="ml-2 align-middle text-[0.6em] text-accent-dim">
-                {live.translation}
-              </span>
+              {live.mode === "scripture" ? (
+                <>
+                  {live.reference}
+                  <span className="ml-2 align-middle text-[0.6em] text-accent-dim">
+                    {live.translation}
+                  </span>
+                </>
+              ) : (
+                <>
+                  {live.title}
+                  <span className="ml-2 align-middle text-[0.6em] text-accent-dim">
+                    {live.section}
+                  </span>
+                </>
+              )}
             </p>
           </div>
         </div>
@@ -224,6 +235,7 @@ function BackgroundSwatch({
 function ControlPanel() {
   const { live, outputs, push } = useController();
   const library = useMediaLibrary();
+  const service = useService();
   const [translation, setTranslation] = useState<Translation>(() => {
     if (typeof window === "undefined") return "WEB";
     const stored = window.localStorage.getItem(TRANSLATION_KEY);
@@ -251,7 +263,7 @@ function ControlPanel() {
   const bgFileRef = useRef<HTMLInputElement>(null);
   const [query, setQuery] = useState("");
   const preBlankRef = useRef<LiveState | null>(null);
-  const rowRefs = useRef(new Map<string, HTMLButtonElement>());
+  const rowRefs = useRef(new Map<string, HTMLDivElement>());
   const inputRef = useRef<HTMLInputElement>(null);
   const searchWrapRef = useRef<HTMLDivElement>(null);
 
@@ -430,6 +442,24 @@ function ControlPanel() {
       });
     },
     [push, translation, liveBackground, fontScale, fontFamily],
+  );
+
+  const addToService = useCallback(
+    (verses: Verse[]) => {
+      if (verses.length === 0) return;
+      const reference = combineReference(verses);
+      service.add({
+        type: "scripture",
+        label: reference,
+        scripture: {
+          verseId: verses[0]!.id,
+          reference,
+          text: combineVerses(verses, translation),
+          translation,
+        },
+      });
+    },
+    [service, translation],
   );
 
   const closeSearch = useCallback(() => {
@@ -640,6 +670,12 @@ function ControlPanel() {
               className="rounded px-2.5 py-1 text-muted-foreground transition-colors hover:bg-panel hover:text-foreground"
             >
               Media
+            </Link>
+            <Link
+              to="/lyrics"
+              className="rounded px-2.5 py-1 text-muted-foreground transition-colors hover:bg-panel hover:text-foreground"
+            >
+              Lyrics
             </Link>
           </nav>
         </div>
@@ -923,32 +959,43 @@ function ControlPanel() {
                     {chapterVerses.map((verse) => {
                       const isLive = verse.id === liveVerseId;
                       return (
-                        <button
+                        <div
                           key={verse.id}
                           ref={(el) => {
                             if (el) rowRefs.current.set(verse.id, el);
                             else rowRefs.current.delete(verse.id);
                           }}
-                          onClick={() => goLive([verse])}
                           className={cn(
-                            "flex flex-col items-start gap-0.5 rounded-md px-3 py-2 text-left transition-colors",
+                            "group flex items-center gap-1 rounded-md transition-colors",
                             isLive
                               ? "bg-accent/15 ring-1 ring-inset ring-accent"
                               : "hover:bg-panel-raised",
                           )}
                         >
-                          <span
-                            className={cn(
-                              "font-display text-sm tracking-wide",
-                              isLive ? "text-accent" : "text-foreground",
-                            )}
+                          <button
+                            onClick={() => goLive([verse])}
+                            className="flex min-w-0 flex-1 flex-col items-start gap-0.5 px-3 py-2 text-left"
                           >
-                            {verse.ref}
-                          </span>
-                          <span className="line-clamp-1 text-xs text-muted-foreground">
-                            {verse.text[translation]}
-                          </span>
-                        </button>
+                            <span
+                              className={cn(
+                                "font-display text-sm tracking-wide",
+                                isLive ? "text-accent" : "text-foreground",
+                              )}
+                            >
+                              {verse.ref}
+                            </span>
+                            <span className="line-clamp-1 text-xs text-muted-foreground">
+                              {verse.text[translation]}
+                            </span>
+                          </button>
+                          <button
+                            onClick={() => addToService([verse])}
+                            aria-label={`Add ${verse.ref} to service`}
+                            className="mr-1 shrink-0 rounded p-1 text-muted-foreground opacity-0 transition-opacity hover:bg-panel-raised hover:text-foreground group-hover:opacity-100"
+                          >
+                            <Plus className="h-3.5 w-3.5" />
+                          </button>
+                        </div>
                       );
                     })}
                   </div>
