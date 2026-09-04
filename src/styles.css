@@ -169,9 +169,26 @@
     }
   }
 
+  .timer-flash {
+    animation: timer-flash 1s ease-in-out infinite;
+  }
+
+  @keyframes timer-flash {
+    0%,
+    100% {
+      background-color: color-mix(in srgb, var(--color-destructive) 12%, transparent);
+      box-shadow: 0 0 0 0 color-mix(in srgb, var(--color-destructive) 45%, transparent);
+    }
+    50% {
+      background-color: color-mix(in srgb, var(--color-destructive) 35%, transparent);
+      box-shadow: 0 0 0 6px transparent;
+    }
+  }
+
   @media (prefers-reduced-motion: reduce) {
     .stage-fade-enter,
-    .pulse-dot {
+    .pulse-dot,
+    .timer-flash {
       animation: none !important;
     }
   }

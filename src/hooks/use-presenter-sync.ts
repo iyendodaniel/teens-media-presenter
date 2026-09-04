@@ -20,7 +20,7 @@ type LiveStateInput = DistributiveOmit<LiveState, "revision">;
 
 /** Control Panel side: owns live state, tracks connected Output windows. */
 export function useController() {
-  const [live, setLive] = useState<LiveState>(() => ({ mode: "blank", revision: 0 }));
+  const [live, setLive] = useState<LiveState>(() => readPersistedState());
   const [outputs, setOutputs] = useState(0);
   const busRef = useRef<SyncBus | null>(null);
   const liveRef = useRef(live);
@@ -28,9 +28,6 @@ export function useController() {
 
   useEffect(() => {
     const seenOutputs = new Map<string, number>();
-    const restored = readPersistedState();
-    setLive(restored);
-    liveRef.current = restored;
 
     const bus = createBus((message: SyncMessage) => {
       if (message.type === "request-state") {
@@ -79,11 +76,9 @@ export function useController() {
 
 /** Output side: mirrors live state, announces presence, asks for catch-up. */
 export function useOutput() {
-  const [live, setLive] = useState<LiveState>(() => ({ mode: "blank", revision: 0 }));
+  const [live, setLive] = useState<LiveState>(() => readPersistedState());
 
   useEffect(() => {
-    setLive(readPersistedState());
-
     const bus = createBus((message: SyncMessage) => {
       if (message.type === "state") setLive(message.state);
       if (message.type === "presence" && message.role === "control") {

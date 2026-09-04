@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import {
   ClipboardPaste,
   CornerDownLeft,
@@ -35,7 +35,14 @@ import { MediaStage, fitClass } from "@/components/media/media-stage";
 import { createLinkedItem, formatDuration, searchMedia, type MediaItem } from "@/lib/media-library";
 import { parseOrderOfService } from "@/lib/order-of-service";
 import type { FolderEntry } from "@/lib/media-folder";
-import { fontFamilyFor, type LiveState, type MediaFitMode } from "@/lib/presenter-sync";
+import {
+  DEFAULT_FONT_SCALE,
+  fontFamilyFor,
+  type LiveState,
+  type MediaFitMode,
+} from "@/lib/presenter-sync";
+import { previewVerseFontSize } from "@/lib/verse-font-size";
+import { getTimerState, resetTimer, setTimerMinutes, subscribeTimer, toggleTimer } from "@/lib/timer-store";
 
 export const Route = createFileRoute("/media")({
   head: () => ({
@@ -1063,7 +1070,10 @@ function MediaPanel() {
               </p>
               <span className="truncate text-xs text-muted-foreground">{liveLabel}</span>
             </div>
-            <div className="aspect-video w-full overflow-hidden rounded-lg bg-stage shadow-stage">
+            <div
+              className="aspect-video w-full overflow-hidden rounded-lg bg-stage shadow-stage"
+              style={{ containerType: "inline-size" }}
+            >
               <LiveMirror
                 live={live}
                 onTime={(current, duration) => setPosition({ current, duration })}
@@ -1303,41 +1313,27 @@ const TIMER_PRESETS = [5, 10, 15, 20, 30];
 
 /** Operator-only countdown clock for pacing the service — not sent to Output. */
 function TimerWidget() {
-  const [totalSeconds, setTotalSeconds] = useState(5 * 60);
-  const [remaining, setRemaining] = useState(5 * 60);
-  const [running, setRunning] = useState(false);
-  const [minutesInput, setMinutesInput] = useState("5");
+  const timer = useSyncExternalStore(subscribeTimer, getTimerState, getTimerState);
+  const { totalSeconds, remaining, running } = timer;
+  const [minutesInput, setMinutesInput] = useState(() => String(Math.round(totalSeconds / 60)));
 
+  // Keep the "custom minutes" text field in sync when the duration changes
+  // from elsewhere (a preset button, or the timer restoring on mount).
   useEffect(() => {
-    if (!running) return;
-    const id = window.setInterval(() => {
-      setRemaining((r) => {
-        if (r <= 1) {
-          setRunning(false);
-          return 0;
-        }
-        return r - 1;
-      });
-    }, 1000);
-    return () => window.clearInterval(id);
-  }, [running]);
+    setMinutesInput(String(Math.round(totalSeconds / 60)));
+  }, [totalSeconds]);
 
   const applyMinutes = useCallback((minutes: number) => {
-    const clamped = Math.max(0, Math.min(180, minutes));
-    setRunning(false);
-    setTotalSeconds(clamped * 60);
-    setRemaining(clamped * 60);
-    setMinutesInput(String(clamped));
+    setTimerMinutes(minutes);
   }, []);
 
   const toggle = useCallback(() => {
-    setRunning((r) => !r);
+    toggleTimer();
   }, []);
 
   const reset = useCallback(() => {
-    setRunning(false);
-    setRemaining(totalSeconds);
-  }, [totalSeconds]);
+    resetTimer();
+  }, []);
 
   const mm = String(Math.floor(remaining / 60)).padStart(2, "0");
   const ss = String(remaining % 60).padStart(2, "0");
@@ -1346,18 +1342,23 @@ function TimerWidget() {
   const pct = totalSeconds > 0 ? ((totalSeconds - remaining) / totalSeconds) * 100 : 0;
 
   return (
-    <div className="flex flex-col gap-2.5 rounded-md border border-border bg-panel p-3">
+    <div
+      className={cn(
+        "flex flex-col gap-2.5 rounded-md border border-border bg-panel p-3 transition-colors",
+        isDone && "border-destructive/70 bg-destructive/10",
+      )}
+    >
       <div
         className={cn(
           "flex items-center justify-center rounded-md border py-3 font-mono text-2xl tabular-nums transition-colors",
           isDone
-            ? "border-destructive bg-destructive/10 text-destructive"
+            ? "timer-flash border-destructive bg-destructive/10 text-destructive"
             : isLow
               ? "border-destructive/60 text-destructive"
               : "border-border text-foreground",
         )}
       >
-        {mm}:{ss}
+        {isDone ? "TIME'S UP" : `${mm}:${ss}`}
       </div>
 
       <div className="h-1 w-full overflow-hidden rounded-full bg-panel-raised">
@@ -1438,7 +1439,7 @@ function LiveMirror({
   }
   if (live.mode === "scripture") {
     return (
-      <div className="relative flex h-full w-full flex-col items-center justify-center gap-3 px-6 text-center">
+      <div className="relative flex h-full w-full flex-col items-center justify-center gap-[3cqw] px-[6cqw] py-[6cqw] text-center">
         {backgroundUrl ? (
           <>
             <img
@@ -1450,12 +1451,20 @@ function LiveMirror({
           </>
         ) : null}
         <p
-          className="relative z-10 line-clamp-4 text-sm text-foreground"
-          style={{ fontFamily: fontFamilyFor(live.fontFamily) }}
+          className="relative z-10 max-w-[92%] font-medium leading-[1.35] text-foreground"
+          style={{
+            fontSize: previewVerseFontSize(live.text.length, live.fontScale ?? DEFAULT_FONT_SCALE),
+            fontFamily: fontFamilyFor(live.fontFamily),
+          }}
         >
           {live.text}
         </p>
-        <p className="relative z-10 font-display text-accent">{live.reference}</p>
+        <p
+          className="relative z-10 font-display text-accent"
+          style={{ fontSize: "clamp(0.55rem, 2cqw, 1.1rem)", letterSpacing: "0.04em" }}
+        >
+          {live.reference}
+        </p>
       </div>
     );
   }

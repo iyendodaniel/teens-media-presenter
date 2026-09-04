@@ -142,6 +142,9 @@ function combineReference(verses: Verse[]): string {
 const BACKGROUND_KEY = "tmp.scripture.backgroundId";
 const FONT_SCALE_KEY = "tmp.scripture.fontScale";
 const FONT_FAMILY_KEY = "tmp.scripture.fontFamily";
+const TRANSLATION_KEY = "tmp.scripture.translation";
+const NAV_BOOK_KEY = "tmp.scripture.navBookNum";
+const NAV_CHAPTER_KEY = "tmp.scripture.navChapter";
 const SPLIT_KEY = "tmp.controlPanel.splitRatio";
 /** Fraction of the row taken by the verse list; the preview gets the rest. */
 const DEFAULT_SPLIT = 0.38;
@@ -221,10 +224,30 @@ function BackgroundSwatch({
 function ControlPanel() {
   const { live, outputs, push } = useController();
   const library = useMediaLibrary();
-  const [translation, setTranslation] = useState<Translation>("WEB");
-  const [backgroundId, setBackgroundId] = useState<string | null>(null);
-  const [fontScale, setFontScale] = useState(DEFAULT_FONT_SCALE);
-  const [fontFamily, setFontFamily] = useState<ScriptureFontKey>(DEFAULT_FONT_KEY);
+  const [translation, setTranslation] = useState<Translation>(() => {
+    if (typeof window === "undefined") return "WEB";
+    const stored = window.localStorage.getItem(TRANSLATION_KEY);
+    return stored && (TRANSLATIONS as readonly string[]).includes(stored)
+      ? (stored as Translation)
+      : "WEB";
+  });
+  const [backgroundId, setBackgroundId] = useState<string | null>(() =>
+    typeof window === "undefined" ? null : window.localStorage.getItem(BACKGROUND_KEY),
+  );
+  const [fontScale, setFontScale] = useState(() => {
+    if (typeof window === "undefined") return DEFAULT_FONT_SCALE;
+    const stored = Number.parseFloat(window.localStorage.getItem(FONT_SCALE_KEY) ?? "");
+    return Number.isFinite(stored)
+      ? Math.min(MAX_FONT_SCALE, Math.max(MIN_FONT_SCALE, stored))
+      : DEFAULT_FONT_SCALE;
+  });
+  const [fontFamily, setFontFamily] = useState<ScriptureFontKey>(() => {
+    if (typeof window === "undefined") return DEFAULT_FONT_KEY;
+    const stored = window.localStorage.getItem(FONT_FAMILY_KEY);
+    return stored && SCRIPTURE_FONTS.some((f) => f.key === stored)
+      ? (stored as ScriptureFontKey)
+      : DEFAULT_FONT_KEY;
+  });
   const bgFileRef = useRef<HTMLInputElement>(null);
   const [query, setQuery] = useState("");
   const preBlankRef = useRef<LiveState | null>(null);
@@ -243,25 +266,34 @@ function ControlPanel() {
   const { ratio, setRatio, commit } = useSplitRatio();
 
   // Book / chapter / verse browser.
-  const [navBook, setNavBook] = useState<BookMeta | null>(null);
+  const [navBook, setNavBook] = useState<BookMeta | null>(() => {
+    if (typeof window === "undefined") return null;
+    const storedBookNum = Number.parseInt(window.localStorage.getItem(NAV_BOOK_KEY) ?? "", 10);
+    return Number.isFinite(storedBookNum)
+      ? (BOOK_META.find((b) => b.bookNum === storedBookNum) ?? null)
+      : null;
+  });
   const [navBookData, setNavBookData] = useState<BookFile | null>(null);
-  const [navChapter, setNavChapter] = useState<number | null>(null);
+  const [navChapter, setNavChapter] = useState<number | null>(() => {
+    if (typeof window === "undefined") return null;
+    const storedChapter = Number.parseInt(window.localStorage.getItem(NAV_CHAPTER_KEY) ?? "", 10);
+    return Number.isFinite(storedChapter) ? storedChapter : null;
+  });
   const [navLoading, setNavLoading] = useState(false);
 
   const liveVerseId = live.mode === "scripture" ? live.verseId : null;
 
-  // Restore the last-chosen scripture background/text settings once on mount.
+  // If the book/chapter position was restored from localStorage, the verse
+  // data itself still needs to be fetched (it isn't kept in localStorage).
   useEffect(() => {
-    const stored = window.localStorage.getItem(BACKGROUND_KEY);
-    if (stored) setBackgroundId(stored);
-    const storedScale = Number.parseFloat(window.localStorage.getItem(FONT_SCALE_KEY) ?? "");
-    if (Number.isFinite(storedScale)) {
-      setFontScale(Math.min(MAX_FONT_SCALE, Math.max(MIN_FONT_SCALE, storedScale)));
-    }
-    const storedFont = window.localStorage.getItem(FONT_FAMILY_KEY);
-    if (storedFont && SCRIPTURE_FONTS.some((f) => f.key === storedFont)) {
-      setFontFamily(storedFont as ScriptureFontKey);
-    }
+    if (!navBook) return;
+    setNavLoading(true);
+    void loadBook(navBook.bookNum).then((data) => {
+      setNavBookData(data);
+      setNavLoading(false);
+    });
+    // Only ever meant to run for the restored value on first mount.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -276,6 +308,22 @@ function ControlPanel() {
   useEffect(() => {
     window.localStorage.setItem(FONT_FAMILY_KEY, fontFamily);
   }, [fontFamily]);
+
+  useEffect(() => {
+    window.localStorage.setItem(TRANSLATION_KEY, translation);
+  }, [translation]);
+
+  // Remember where the operator was browsing (book/chapter) so leaving for
+  // the Media section and coming back doesn't drop them at the book list.
+  useEffect(() => {
+    if (navBook) window.localStorage.setItem(NAV_BOOK_KEY, String(navBook.bookNum));
+    else window.localStorage.removeItem(NAV_BOOK_KEY);
+  }, [navBook]);
+
+  useEffect(() => {
+    if (navChapter !== null) window.localStorage.setItem(NAV_CHAPTER_KEY, String(navChapter));
+    else window.localStorage.removeItem(NAV_CHAPTER_KEY);
+  }, [navChapter]);
 
   // Bible backgrounds live in their own dedicated collection, kept separate
   // from the general Media library so it isn't cluttered with every photo
@@ -470,6 +518,8 @@ function ControlPanel() {
         text: nextText,
         translation,
         background: live.background,
+        fontScale: live.fontScale,
+        fontFamily: live.fontFamily,
       });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
