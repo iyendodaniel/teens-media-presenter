@@ -125,7 +125,7 @@ function RootShell({ children }: { children: ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
-  // The floating timer is an operator aid — it must never appear on the
+  // The floating timer is an operator aid - it must never appear on the
   // audience-facing Output window.
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const isOutput = pathname.startsWith("/output");

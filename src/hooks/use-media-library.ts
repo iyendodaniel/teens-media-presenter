@@ -168,7 +168,7 @@ export function useService() {
     saveService(next);
   }, []);
 
-  /** Wholesale swap — used by the "Paste order of service" import. */
+  /** Wholesale swap - used by the "Paste order of service" import. */
   const replace = useCallback((next: ServiceItem[]) => {
     setItems(next);
     saveService(next);

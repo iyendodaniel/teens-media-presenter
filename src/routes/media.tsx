@@ -47,13 +47,13 @@ import { TimerWidget } from "@/components/timer-widget";
 export const Route = createFileRoute("/media")({
   head: () => ({
     meta: [
-      { title: "Media Control Panel — Teens Media Presenter" },
+      { title: "Media Control Panel - Teens Media Presenter" },
       {
         name: "description",
         content:
           "Fire images and videos to the projector in seconds: thumbnail library, instant search overlay, preview then GO LIVE, and full playback control.",
       },
-      { property: "og:title", content: "Media Control Panel — Teens Media Presenter" },
+      { property: "og:title", content: "Media Control Panel - Teens Media Presenter" },
       {
         property: "og:description",
         content:
@@ -150,7 +150,7 @@ function MediaThumb({
         </span>
       ) : item.source === "linked" ? (
         <span
-          title="Linked — streams from the web, not stored locally"
+          title="Linked - streams from the web, not stored locally"
           className="pointer-events-none absolute left-1.5 top-1.5 flex items-center gap-0.5 rounded bg-background/85 px-1.5 py-0.5 text-[10px] text-muted-foreground"
         >
           <Link2 className="h-2.5 w-2.5" /> Linked
@@ -211,7 +211,7 @@ function SelectedPreview({ item, fit }: { item: MediaItem; fit: MediaFitMode }) 
 
 /* ----------------------------------------------------------------- folder */
 
-/** Large thumbnail card for a folder entry — mirrors MediaThumb's grid look. */
+/** Large thumbnail card for a folder entry - mirrors MediaThumb's grid look. */
 function FolderThumb({ entry, onSelect }: { entry: FolderEntry; onSelect: () => void }) {
   const [preview, setPreview] = useState<string | null>(null);
 
@@ -272,7 +272,7 @@ function FolderTab({
   if (!folder.supported) {
     return (
       <p className="rounded-md border border-border bg-panel p-4 text-xs text-muted-foreground">
-        Folder reading needs the File System Access API — Chrome or Edge on desktop. Firefox and
+        Folder reading needs the File System Access API - Chrome or Edge on desktop. Firefox and
         Safari don't support it yet; use Import or a URL link there instead.
       </p>
     );
@@ -319,7 +319,7 @@ function FolderTab({
           onClick={() => void folder.grantPermission()}
           className="rounded-md border border-accent bg-accent/10 px-3 py-2 text-left text-xs text-foreground"
         >
-          Click to reconnect to &ldquo;{folder.dirName}&rdquo; — the browser drops folder access
+          Click to reconnect to &ldquo;{folder.dirName}&rdquo; - the browser drops folder access
           between sessions, so this needs one click to restore it.
         </button>
       ) : folder.loading ? (
@@ -507,7 +507,7 @@ function MediaPanel() {
 
   const selectFolderEntry = useCallback(
     async (entry: FolderEntry) => {
-      // Folder files aren't stored anywhere until picked — once picked, they
+      // Folder files aren't stored anywhere until picked - once picked, they
       // go through the normal import path (blob copied into IndexedDB) so
       // playback uses the exact same, already-working pipeline as any other
       // imported file. From here on it behaves like a regular library item.
@@ -721,7 +721,7 @@ function MediaPanel() {
       </header>
 
       <div ref={rowRef} className="flex min-h-0 flex-1 flex-col lg:flex-row">
-        {/* LEFT — library */}
+        {/* LEFT - library */}
         <div
           className="flex min-h-0 flex-1 flex-col border-b border-border lg:flex-none lg:border-b-0 lg:border-r"
           style={{ flexBasis: `${ratio * 100}%` }}
@@ -864,7 +864,7 @@ function MediaPanel() {
               {linkAskKind ? (
                 <div className="mt-1.5 flex items-center gap-1.5 rounded-md border border-border bg-panel-raised px-2 py-1.5 text-[10px] text-muted-foreground">
                   <span className="flex-1">
-                    Couldn't tell the file type — is this an image or a video?
+                    Couldn't tell the file type - is this an image or a video?
                   </span>
                   <button
                     onClick={() => addLink(linkAskKind, "image")}
@@ -917,7 +917,7 @@ function MediaPanel() {
 
             {library.importing > 0 ? (
               <p className="mb-2 rounded-md border border-border bg-panel px-3 py-1.5 text-xs text-muted-foreground">
-                Importing {library.importing} file{library.importing === 1 ? "" : "s"} — thumbnails
+                Importing {library.importing} file{library.importing === 1 ? "" : "s"} - thumbnails
                 are generating in the background.
               </p>
             ) : null}
@@ -1061,7 +1061,7 @@ function MediaPanel() {
           <span className="h-8 w-0.5 rounded-full bg-muted-foreground/60" />
         </div>
 
-        {/* RIGHT — live output */}
+        {/* RIGHT - live output */}
         <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto p-5">
           <div>
             <div className="mb-2 flex items-center justify-between">
@@ -1273,7 +1273,7 @@ function MediaPanel() {
             </div>
             <p className="text-xs text-muted-foreground">
               One line per item. Numbering is optional. Lines that match a filename in your media
-              library (e.g. "05 Announcement.mp4") are linked automatically — everything else
+              library (e.g. "05 Announcement.mp4") are linked automatically - everything else
               becomes a plain note, same as adding one by hand. This replaces the current list.
             </p>
             <textarea
@@ -1281,7 +1281,7 @@ function MediaPanel() {
               onChange={(e) => setOrderText(e.target.value)}
               rows={10}
               placeholder={
-                "01 Welcome\n02 Opening Prayer\n03 Way Maker\n04 Scripture — Psalm 23\n05 Announcement.mp4\n06 Sermon"
+                "01 Welcome\n02 Opening Prayer\n03 Way Maker\n04 Scripture - Psalm 23\n05 Announcement.mp4\n06 Sermon"
               }
               className="w-full resize-none rounded-md border border-input bg-background p-2.5 font-mono text-xs placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
             />

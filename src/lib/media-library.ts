@@ -138,7 +138,7 @@ export function saveItems(items: MediaItem[]) {
     );
     window.localStorage.setItem(ITEMS_KEY, JSON.stringify(slim));
   } catch {
-    /* quota — metadata is best-effort */
+    /* quota - metadata is best-effort */
   }
 }
 
@@ -234,7 +234,7 @@ const VIDEO_EXT_RE = /\.(mp4|webm|mov|m4v)(\?.*)?$/i;
 
 export type LinkedMediaResult =
   | { ok: true; item: MediaItem }
-  /** Extension gave no hint — caller should ask the user to pick image/video. */
+  /** Extension gave no hint - caller should ask the user to pick image/video. */
   | { ok: "ambiguous"; url: string }
   | { ok: false; reason: string };
 
@@ -275,7 +275,7 @@ export function createLinkedItem(
       ok: true,
       item: {
         id: newId(),
-        name: `YouTube — ${youtube[1]}`,
+        name: `YouTube - ${youtube[1]}`,
         kind: "video",
         source: "linked",
         url: `https://www.youtube.com/embed/${youtube[1]}?autoplay=1&rel=0`,
@@ -292,7 +292,7 @@ export function createLinkedItem(
       ok: true,
       item: {
         id: newId(),
-        name: `Vimeo — ${vimeo[1]}`,
+        name: `Vimeo - ${vimeo[1]}`,
         kind: "video",
         source: "linked",
         url: `https://player.vimeo.com/video/${vimeo[1]}?autoplay=1`,

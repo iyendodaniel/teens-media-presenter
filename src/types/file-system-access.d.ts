@@ -1,7 +1,7 @@
 /**
  * Minimal ambient types for the parts of the File System Access API this
  * app uses (see lib/media-folder.ts). Not yet included in this project's
- * configured DOM lib version. Chrome/Edge only at runtime — see that file
+ * configured DOM lib version. Chrome/Edge only at runtime - see that file
  * for the full support note.
  */
 

@@ -52,8 +52,8 @@ export const Route = createFileRoute("/")({
 });
 
 /**
- * Mirrors whatever is actually live on the Output window — scripture, image,
- * video, black or blank — regardless of which control panel (scripture or
+ * Mirrors whatever is actually live on the Output window - scripture, image,
+ * video, black or blank - regardless of which control panel (scripture or
  * media) is currently open. There is only ever one Live on Output; this
  * preview must never go stale just because the operator switched sections.
  */
@@ -817,7 +817,7 @@ function ControlPanel() {
                   />
                   {backgroundOptions.length === 0 ? (
                     <span className="text-[10px] text-muted-foreground">
-                      This is a dedicated set, separate from the Media library — add images just for
+                      This is a dedicated set, separate from the Media library - add images just for
                       scripture backgrounds.
                     </span>
                   ) : null}

@@ -3,7 +3,7 @@
  *
  * The timer widget used to hold its state in local `useState` inside the
  * Media route. That meant switching to the Scripture section (which
- * unmounts the Media route) threw the timer away completely — it wasn't
+ * unmounts the Media route) threw the timer away completely - it wasn't
  * just paused, it forgot the time and stopped ticking.
  *
  * This module-level store lives for as long as the tab is open, so any
@@ -13,7 +13,7 @@
  * elapsed instead of silently resuming from where it left off.
  *
  * When the countdown hits zero it also sounds a repeating chime (Web Audio,
- * no audio file needed) until the operator dismisses it — a color change
+ * no audio file needed) until the operator dismisses it - a color change
  * alone is easy to miss when you're not looking at the screen.
  */
 
@@ -232,7 +232,7 @@ export function resetTimer(): void {
   emit();
 }
 
-/** Stop the repeating chime without resetting the clock — the "TIME'S UP"
+/** Stop the repeating chime without resetting the clock - the "TIME'S UP"
  * display stays visible until Reset or a new duration is set. */
 export function silenceAlarm(): void {
   if (!state.alarming) return;

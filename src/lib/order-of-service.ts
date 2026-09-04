@@ -1,6 +1,6 @@
 /**
  * Turns a pasted "order of service" text block into ServiceItem[]. One line
- * in, one item out — matched against the media library by filename so
+ * in, one item out - matched against the media library by filename so
  * entries like "05 Announcement.mp4" come out already wired to that media
  * item (immediately go-live-able), same as adding it by hand.
  */

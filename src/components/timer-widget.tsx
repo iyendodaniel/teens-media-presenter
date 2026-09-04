@@ -84,7 +84,7 @@ function DurationFields({ totalSeconds }: { totalSeconds: number }) {
   );
 }
 
-/** Operator-only countdown clock for pacing the service — not sent to Output. */
+/** Operator-only countdown clock for pacing the service - not sent to Output. */
 export function TimerWidget() {
   const { totalSeconds, remaining, running, alarming } = useTimer();
   const isLow = !alarming && remaining > 0 && remaining <= 30;
@@ -108,7 +108,7 @@ export function TimerWidget() {
               : "border-border text-foreground",
         )}
       >
-        {alarming ? "TIME'S UP — tap to silence" : formatClock(remaining)}
+        {alarming ? "TIME'S UP - tap to silence" : formatClock(remaining)}
       </button>
 
       <div className="h-1 w-full overflow-hidden rounded-full bg-panel-raised">

@@ -1,18 +1,18 @@
 /**
  * "Read from a folder" media source, built on the File System Access API
- * (Chrome/Edge on desktop only — Firefox and Safari don't implement it).
+ * (Chrome/Edge on desktop only - Firefox and Safari don't implement it).
  *
  * The platform will not let a web app silently watch a folder in the
  * background: the operator picks a folder once via a native picker, the
  * DirectoryHandle gets persisted in IndexedDB (handles are structured-
  * cloneable, so this works the same way the media blob store does), and on
- * every later visit the browser makes us re-confirm permission — one click,
+ * every later visit the browser makes us re-confirm permission - one click,
  * not a re-pick. There's also no live "watch for new files" API with broad
  * support, so this lists the folder's contents on demand (on connect, and
  * whenever the operator hits Refresh) rather than continuously.
  *
  * Files aren't read into memory until the operator actually picks one from
- * the list — see the "select a folder entry" flow in routes/media.tsx,
+ * the list - see the "select a folder entry" flow in routes/media.tsx,
  * which hands the resulting File to the existing importFiles() path so
  * playback goes through the same already-working pipeline as any other
  * imported file (the Output window has no filesystem access of its own).
@@ -89,7 +89,7 @@ export async function hasPermission(handle: FileSystemDirectoryHandle): Promise<
   return (await handle.queryPermission({ mode: "read" })) === "granted";
 }
 
-/** Must be called from a user gesture (a button's onClick) — the browser requires it. */
+/** Must be called from a user gesture (a button's onClick) - the browser requires it. */
 export async function requestPermission(handle: FileSystemDirectoryHandle): Promise<boolean> {
   return (await handle.requestPermission({ mode: "read" })) === "granted";
 }
@@ -113,7 +113,7 @@ export type FolderEntry = {
   handle: FileSystemFileHandle;
 };
 
-/** Lists the media files directly inside a folder (non-recursive — keeps it predictable). */
+/** Lists the media files directly inside a folder (non-recursive - keeps it predictable). */
 export async function listFolderMedia(dir: FileSystemDirectoryHandle): Promise<FolderEntry[]> {
   const entries: FolderEntry[] = [];
   for await (const handle of dir.values()) {

@@ -52,7 +52,7 @@ export function useFolderLibrary() {
   }, [refresh]);
 
   // Separate from the auto-reconnect above because permission prompts must
-  // originate from a user gesture — this is wired to a button's onClick.
+  // originate from a user gesture - this is wired to a button's onClick.
   const grantPermission = useCallback(async () => {
     if (!dirHandle) return;
     const granted = await requestPermission(dirHandle);

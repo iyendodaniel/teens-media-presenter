@@ -59,7 +59,7 @@ export function MediaStage({ state, forceMuted = false, onTime }: Props) {
   const mediaId = state.mode === "video" ? state.mediaId : null;
 
   // Sticky autoplay-muted fallback. Browsers block programmatic unmuted
-  // autoplay unless this document has "media engagement" — the Output
+  // autoplay unless this document has "media engagement" - the Output
   // window usually doesn't. When a play() attempt gets rejected we force
   // muted and remember that in state (not just on the DOM node), because a
   // re-render would otherwise snap `muted` back to state.muted (false) and
@@ -73,7 +73,7 @@ export function MediaStage({ state, forceMuted = false, onTime }: Props) {
       video.muted = true;
       setAutoplayMuted(true);
       void video.play().catch(() => {
-        /* still blocked — needs a real click on the Output window */
+        /* still blocked - needs a real click on the Output window */
       });
     });
   }, []);
@@ -113,7 +113,7 @@ export function MediaStage({ state, forceMuted = false, onTime }: Props) {
 
   if (state.mode === "video" && state.embed) {
     // YouTube/Vimeo: src is an iframe embed URL, not a video file. Playback
-    // transport (play/pause) isn't wired for embeds — restart re-mounts the
+    // transport (play/pause) isn't wired for embeds - restart re-mounts the
     // iframe via the key below, which is the one control that reliably works
     // across providers without a postMessage integration per provider.
     return (

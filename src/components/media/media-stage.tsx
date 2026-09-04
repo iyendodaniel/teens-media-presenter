@@ -96,7 +96,7 @@ export function MediaStage({ state, forceMuted = false, onTime }: Props) {
 
   if (state.mode === "video" && state.embed) {
     // YouTube/Vimeo: src is an iframe embed URL, not a video file. Playback
-    // transport (play/pause) isn't wired for embeds — restart re-mounts the
+    // transport (play/pause) isn't wired for embeds - restart re-mounts the
     // iframe via the key below, which is the one control that reliably works
     // across providers without a postMessage integration per provider.
     return (
