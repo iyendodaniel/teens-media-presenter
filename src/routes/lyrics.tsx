@@ -10,7 +10,7 @@ import { previewVerseFontSize } from "@/lib/verse-font-size";
 export const Route = createFileRoute("/lyrics")({
   head: () => ({
     meta: [
-      { title: "Lyrics - Teens Media Presenter" },
+      { title: "Lyrics Control Panel - Teens Media Presenter" },
       {
         name: "description",
         content: "Song/lyrics control panel: search, edit sections, preview then GO LIVE.",

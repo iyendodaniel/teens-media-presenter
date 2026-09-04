@@ -32,13 +32,13 @@ import { previewVerseFontSize } from "@/lib/verse-font-size";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Teens Media Presenter - Control Panel" },
+      { title: "Scripture Control Panel - Teens Media Presenter" },
       {
         name: "description",
         content:
           "Live scripture control panel: command-palette search, resizable panels and a large Live on Output preview.",
       },
-      { property: "og:title", content: "Teens Media Presenter - Control Panel" },
+      { property: "og:title", content: "Scripture Control Panel - Teens Media Presenter" },
       {
         property: "og:description",
         content:
