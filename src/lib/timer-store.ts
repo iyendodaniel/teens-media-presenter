@@ -17,6 +17,8 @@
  * alone is easy to miss when you're not looking at the screen.
  */
 
+import { createBus, type SyncMessage, type TimerOverlayState } from "./presenter-sync";
+
 export type TimerState = {
   totalSeconds: number;
   remaining: number;
@@ -25,6 +27,9 @@ export type TimerState = {
    * it (via silenceAlarm/resetTimer/setting a new duration). Drives both
    * the repeating chime and any "time's up" visual treatment. */
   alarming: boolean;
+  /** When true, the countdown is published to the Output window as an
+   * overlay on top of whatever else is live. */
+  showOnOutput: boolean;
 };
 
 type Listener = () => void;
@@ -35,18 +40,26 @@ const TOTAL_KEY = "tmp.timer.totalSeconds";
 const REMAINING_KEY = "tmp.timer.remaining";
 const END_AT_KEY = "tmp.timer.endAt";
 const ALARMING_KEY = "tmp.timer.alarming";
+const SHOW_ON_OUTPUT_KEY = "tmp.timer.showOnOutput";
 
 function loadInitial(): TimerState {
   if (typeof window === "undefined") {
-    return { totalSeconds: 300, remaining: 300, running: false, alarming: false };
+    return { totalSeconds: 300, remaining: 300, running: false, alarming: false, showOnOutput: false };
   }
   try {
+    const showOnOutput = window.localStorage.getItem(SHOW_ON_OUTPUT_KEY) === "1";
     const storedTotal = Number.parseInt(window.localStorage.getItem(TOTAL_KEY) ?? "", 10);
     const totalSeconds = Number.isFinite(storedTotal) && storedTotal > 0 ? storedTotal : 300;
     const endAt = Number.parseInt(window.localStorage.getItem(END_AT_KEY) ?? "", 10);
     if (Number.isFinite(endAt)) {
       const remaining = Math.max(0, Math.round((endAt - Date.now()) / 1000));
-      return { totalSeconds, remaining, running: remaining > 0, alarming: remaining <= 0 };
+      return {
+        totalSeconds,
+        remaining,
+        running: remaining > 0,
+        alarming: remaining <= 0,
+        showOnOutput,
+      };
     }
     const storedRemaining = Number.parseInt(window.localStorage.getItem(REMAINING_KEY) ?? "", 10);
     const remaining = Number.isFinite(storedRemaining) ? storedRemaining : totalSeconds;
@@ -55,9 +68,10 @@ function loadInitial(): TimerState {
       remaining,
       running: false,
       alarming: remaining <= 0 && window.localStorage.getItem(ALARMING_KEY) === "1",
+      showOnOutput,
     };
   } catch {
-    return { totalSeconds: 300, remaining: 300, running: false, alarming: false };
+    return { totalSeconds: 300, remaining: 300, running: false, alarming: false, showOnOutput: false };
   }
 }
 
@@ -72,14 +86,47 @@ function persist() {
     window.localStorage.setItem(TOTAL_KEY, String(state.totalSeconds));
     window.localStorage.setItem(REMAINING_KEY, String(state.remaining));
     window.localStorage.setItem(ALARMING_KEY, state.alarming ? "1" : "0");
+    window.localStorage.setItem(SHOW_ON_OUTPUT_KEY, state.showOnOutput ? "1" : "0");
     if (!state.running) window.localStorage.removeItem(END_AT_KEY);
   } catch {
     /* ignore */
   }
 }
 
+/* ---------------------------------------------------------- Output overlay */
+/* Published on its own bus/channel, independent of the operator's current
+ * route, so the countdown keeps ticking on Output even while the operator
+ * flips between Scripture/Media/Lyrics (all of which mount/unmount the
+ * timer widget, but never this module-level store). */
+
+let overlayBus: ReturnType<typeof createBus> | null = null;
+
+function currentOverlay(): TimerOverlayState {
+  if (!state.showOnOutput) return null;
+  return {
+    totalSeconds: state.totalSeconds,
+    remaining: state.remaining,
+    running: state.running,
+    alarming: state.alarming,
+  };
+}
+
+function publishOverlay() {
+  overlayBus?.publish({ type: "timer-overlay", timer: currentOverlay() });
+}
+
+function ensureOverlayBus() {
+  if (overlayBus || typeof window === "undefined") return;
+  overlayBus = createBus((message: SyncMessage) => {
+    // A newly-opened Output window broadcasts this on mount - reply with
+    // whatever the current overlay state is (including "hidden").
+    if (message.type === "request-state") publishOverlay();
+  });
+}
+
 function emit() {
   persist();
+  publishOverlay();
   for (const listener of listeners) listener();
 }
 
@@ -161,6 +208,7 @@ function ensureTicking() {
 
 if (typeof window !== "undefined") {
   ensureTicking();
+  ensureOverlayBus();
   if (state.alarming) startAlarmSound();
 }
 
@@ -185,7 +233,7 @@ export function setTimerDuration(hours: number, minutes: number, seconds: number
     ),
   );
   stopAlarmSound();
-  state = { totalSeconds, remaining: totalSeconds, running: false, alarming: false };
+  state = { totalSeconds, remaining: totalSeconds, running: false, alarming: false, showOnOutput: state.showOnOutput };
   try {
     window.localStorage.removeItem(END_AT_KEY);
   } catch {
@@ -237,5 +285,10 @@ export function resetTimer(): void {
 export function silenceAlarm(): void {
   if (!state.alarming) return;
   stopAlarmSound();
+  emit();
+}
+
+export function toggleShowOnOutput(): void {
+  state = { ...state, showOnOutput: !state.showOnOutput };
   emit();
 }

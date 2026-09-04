@@ -95,13 +95,22 @@ export type LiveState =
 
 export type SyncMessage =
   | { type: "state"; state: LiveState }
+  | { type: "timer-overlay"; timer: TimerOverlayState }
   | { type: "request-state"; from: string }
   | { type: "presence"; role: "output" | "control"; clientId: string; at: number }
   | { type: "bye"; clientId: string };
 
+/** Countdown overlay published independently of LiveState so a timer can show
+ * ALONGSIDE whatever's currently live (scripture, a slide, etc) rather than
+ * replacing it. `null` means "not shown on Output". */
+export type TimerOverlayState =
+  | { totalSeconds: number; remaining: number; running: boolean; alarming: boolean }
+  | null;
+
 const CHANNEL = "teens-media-presenter";
 const STATE_KEY = "tmp:live-state";
 const RELAY_KEY = "tmp:relay";
+const TIMER_OVERLAY_KEY = "tmp:timer-overlay";
 
 export const INITIAL_STATE: LiveState = { mode: "blank", revision: 0 };
 
@@ -132,6 +141,27 @@ function persistState(state: LiveState) {
   }
 }
 
+/** Catch-up read for a newly-opened Output window, same idea as readPersistedState. */
+export function readPersistedTimerOverlay(): TimerOverlayState {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = window.localStorage.getItem(TIMER_OVERLAY_KEY);
+    if (!raw) return null;
+    return JSON.parse(raw) as TimerOverlayState;
+  } catch {
+    return null;
+  }
+}
+
+function persistTimerOverlay(timer: TimerOverlayState) {
+  try {
+    if (timer) window.localStorage.setItem(TIMER_OVERLAY_KEY, JSON.stringify(timer));
+    else window.localStorage.removeItem(TIMER_OVERLAY_KEY);
+  } catch {
+    /* ignore */
+  }
+}
+
 export type SyncBus = {
   publish: (message: SyncMessage) => void;
   close: () => void;
@@ -147,6 +177,7 @@ export function createBus(onMessage: (message: SyncMessage) => void): SyncBus {
 
   const handleIncoming = (message: SyncMessage) => {
     if (message.type === "state") persistState(message.state);
+    if (message.type === "timer-overlay") persistTimerOverlay(message.timer);
     onMessage(message);
   };
 
@@ -173,6 +204,7 @@ export function createBus(onMessage: (message: SyncMessage) => void): SyncBus {
 
   const publish = (message: SyncMessage) => {
     if (message.type === "state") persistState(message.state);
+    if (message.type === "timer-overlay") persistTimerOverlay(message.timer);
     if (channel) {
       channel.postMessage(message);
       return;

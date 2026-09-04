@@ -3,9 +3,11 @@ import {
   clientId,
   createBus,
   readPersistedState,
+  readPersistedTimerOverlay,
   type LiveState,
   type SyncBus,
   type SyncMessage,
+  type TimerOverlayState,
 } from "@/lib/presenter-sync";
 
 const PRESENCE_INTERVAL = 1500;
@@ -102,4 +104,25 @@ export function useOutput() {
   }, []);
 
   return live;
+}
+
+/**
+ * Output side: mirrors the timer overlay, published independently of
+ * LiveState by timer-store.ts's own bus so it can show ALONGSIDE whatever
+ * else is live rather than replacing it. Returns null when the operator
+ * hasn't toggled "Show on Output" for the timer.
+ */
+export function useTimerOverlay(): TimerOverlayState {
+  const [timer, setTimer] = useState<TimerOverlayState>(() => readPersistedTimerOverlay());
+
+  useEffect(() => {
+    const bus = createBus((message: SyncMessage) => {
+      if (message.type === "timer-overlay") setTimer(message.timer);
+    });
+    // Ask whoever's running the timer to re-announce current state.
+    bus.publish({ type: "request-state", from: clientId });
+    return () => bus.close();
+  }, []);
+
+  return timer;
 }

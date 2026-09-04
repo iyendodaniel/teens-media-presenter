@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState, useSyncExternalStore } from "react";
-import { Pause, Play, RotateCcw, Timer as TimerIcon, X } from "lucide-react";
+import { Monitor, Pause, Play, RotateCcw, Timer as TimerIcon, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   getTimerState,
@@ -8,6 +8,7 @@ import {
   setTimerMinutes,
   silenceAlarm,
   subscribeTimer,
+  toggleShowOnOutput,
   toggleTimer,
 } from "@/lib/timer-store";
 
@@ -86,7 +87,7 @@ function DurationFields({ totalSeconds }: { totalSeconds: number }) {
 
 /** Operator-only countdown clock for pacing the service - not sent to Output. */
 export function TimerWidget() {
-  const { totalSeconds, remaining, running, alarming } = useTimer();
+  const { totalSeconds, remaining, running, alarming, showOnOutput } = useTimer();
   const isLow = !alarming && remaining > 0 && remaining <= 30;
   const pct = totalSeconds > 0 ? ((totalSeconds - remaining) / totalSeconds) * 100 : 0;
 
@@ -135,6 +136,20 @@ export function TimerWidget() {
 
       <DurationFields totalSeconds={totalSeconds} />
 
+      <button
+        onClick={() => toggleShowOnOutput()}
+        aria-pressed={showOnOutput}
+        className={cn(
+          "flex items-center justify-center gap-1.5 rounded-md border py-1.5 text-[11px] font-semibold transition-colors",
+          showOnOutput
+            ? "border-accent bg-accent/15 text-accent"
+            : "border-border bg-panel text-muted-foreground hover:bg-panel-raised hover:text-foreground",
+        )}
+      >
+        <Monitor className="h-3 w-3" />
+        {showOnOutput ? "Showing on Output" : "Show on Output"}
+      </button>
+
       <div className="flex gap-1.5">
         <button
           onClick={() => toggleTimer()}
@@ -163,7 +178,7 @@ export function TimerWidget() {
  * you're on. Never rendered on the audience-facing Output window.
  */
 export function TimerBadge() {
-  const { totalSeconds, remaining, running, alarming } = useTimer();
+  const { totalSeconds, remaining, running, alarming, showOnOutput } = useTimer();
   const [open, setOpen] = useState(false);
   const isLow = !alarming && remaining > 0 && remaining <= 30;
   const isIdle = !running && !alarming && remaining === totalSeconds;
@@ -209,6 +224,7 @@ export function TimerBadge() {
         >
           <TimerIcon className="h-3.5 w-3.5" />
           {alarming ? "TIME'S UP" : formatClock(remaining)}
+          {showOnOutput ? <Monitor className="h-3 w-3 opacity-70" /> : null}
         </button>
       )}
     </div>

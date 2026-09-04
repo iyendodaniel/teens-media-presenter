@@ -1,9 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useOutput } from "@/hooks/use-presenter-sync";
+import { useOutput, useTimerOverlay } from "@/hooks/use-presenter-sync";
 import { MediaStage } from "@/components/media/media-stage";
 import { useResolvedUrl } from "@/hooks/use-media-library";
 import { DEFAULT_FONT_SCALE, fontFamilyFor } from "@/lib/presenter-sync";
 import { verseFontSize } from "@/lib/verse-font-size";
+import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/output")({
   head: () => ({
@@ -11,6 +12,34 @@ export const Route = createFileRoute("/output")({
   }),
   component: OutputPage,
 });
+
+function formatClock(totalSeconds: number): string {
+  const h = Math.floor(totalSeconds / 3600);
+  const m = Math.floor((totalSeconds % 3600) / 60);
+  const s = totalSeconds % 60;
+  const mm = String(m).padStart(2, "0");
+  const ss = String(s).padStart(2, "0");
+  return h > 0 ? `${h}:${mm}:${ss}` : `${mm}:${ss}`;
+}
+
+/** Countdown overlay, rendered on top of whatever else is live. */
+function TimerOverlay() {
+  const timer = useTimerOverlay();
+  if (!timer) return null;
+  return (
+    <div
+      className={cn(
+        "pointer-events-none absolute bottom-[5vh] right-[5vw] z-20 rounded-2xl border px-8 py-4 font-mono tabular-nums shadow-stage backdrop-blur-sm transition-colors",
+        timer.alarming
+          ? "timer-flash border-destructive bg-destructive/20 text-destructive"
+          : "border-white/15 bg-black/45 text-foreground",
+      )}
+      style={{ fontSize: "clamp(2rem, 3.5vw, 5rem)" }}
+    >
+      {timer.alarming ? "TIME'S UP" : formatClock(timer.remaining)}
+    </div>
+  );
+}
 
 function OutputPage() {
   const live = useOutput();
@@ -22,6 +51,7 @@ function OutputPage() {
     return (
       <div className="fixed inset-0 overflow-hidden bg-stage">
         <MediaStage state={live} />
+        <TimerOverlay />
       </div>
     );
   }
@@ -81,6 +111,7 @@ function OutputPage() {
       ) : (
         <div key="blank" className="stage-fade-enter h-full w-full" />
       )}
+      <TimerOverlay />
     </div>
   );
 }
