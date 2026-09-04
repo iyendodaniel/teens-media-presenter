@@ -24,6 +24,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useController } from "@/hooks/use-presenter-sync";
+import { useShortcuts } from "@/hooks/use-shortcuts";
 import {
   useMediaLibrary,
   useMediaUrl,
@@ -596,68 +597,42 @@ function MediaPanel() {
   }, [searchOpen]);
 
   /* --- keyboard map (page-scoped, mirrors the scripture bindings) -------- */
-  useEffect(() => {
-    const onKeyDown = (e: KeyboardEvent) => {
-      const target = e.target as HTMLElement | null;
-      const isTyping = target?.tagName === "INPUT" || target?.tagName === "TEXTAREA";
-
-      if (
-        (e.key === "k" && (e.metaKey || e.ctrlKey)) ||
-        (!isTyping && (e.key === "/" || e.key === "m" || e.key === "M"))
-      ) {
-        e.preventDefault();
-        setSearchOpen(true);
-        inputRef.current?.focus();
-        inputRef.current?.select();
-        return;
-      }
-
-      if (e.key === "Escape") {
-        if (isTyping || searchOpen) {
-          setSearchOpen(false);
-          (target as HTMLInputElement | null)?.blur();
-          return;
-        }
-        e.preventDefault();
-        blackOutput();
-        return;
-      }
-
-      if (isTyping || e.metaKey || e.ctrlKey || e.altKey) return;
-
-      if (e.key === " ") {
-        e.preventDefault();
+  useShortcuts({
+    searchOpenKeys: ["m", "M"],
+    onOpenSearch: () => {
+      setSearchOpen(true);
+      inputRef.current?.focus();
+      inputRef.current?.select();
+    },
+    searchOpen,
+    onCloseSearch: () => setSearchOpen(false),
+    onEscape: blackOutput,
+    extraKeys: {
+      " ": () => {
         if (live.mode === "video") setPlaying(!live.playing);
         else if (selected) goLive(selected);
-      } else if (e.key === "p" || e.key === "P") {
-        e.preventDefault();
+      },
+      p: () => {
         const first = visible[0];
         if (!selected && first) selectItem(first);
-      } else if (e.key === "b" || e.key === "B") {
-        e.preventDefault();
-        blackOutput();
-      } else if (e.key === "c" || e.key === "C") {
-        e.preventDefault();
-        clearOutput();
-      } else if (e.key === "r" || e.key === "R") {
-        e.preventDefault();
-        restart();
-      }
-    };
-    window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
-  }, [
-    blackOutput,
-    clearOutput,
-    goLive,
-    live,
-    restart,
-    searchOpen,
-    selectItem,
-    selected,
-    setPlaying,
-    visible,
-  ]);
+      },
+      b: blackOutput,
+      c: clearOutput,
+      r: restart,
+    },
+    deps: [
+      blackOutput,
+      clearOutput,
+      goLive,
+      live,
+      restart,
+      searchOpen,
+      selectItem,
+      selected,
+      setPlaying,
+      visible,
+    ],
+  });
 
   const onSearchKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (!searchOpen && (e.key === "ArrowDown" || e.key === "Enter")) setSearchOpen(true);

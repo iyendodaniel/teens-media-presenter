@@ -3,6 +3,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ChevronLeft, CornerDownLeft, Image as ImageIcon, Plus, Search, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useController } from "@/hooks/use-presenter-sync";
+import { useShortcuts } from "@/hooks/use-shortcuts";
 import {
   DEFAULT_FONT_KEY,
   DEFAULT_FONT_SCALE,
@@ -17,6 +18,7 @@ import {
 import {
   BOOK_META,
   TRANSLATIONS,
+  getBookMeta,
   loadBook,
   stepVerse,
   type BookFile,
@@ -32,13 +34,13 @@ import { previewVerseFontSize } from "@/lib/verse-font-size";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Scripture Control Panel - Teens Media Presenter" },
+      { title: "Teens Media Presenter - Control Panel" },
       {
         name: "description",
         content:
           "Live scripture control panel: command-palette search, resizable panels and a large Live on Output preview.",
       },
-      { property: "og:title", content: "Scripture Control Panel - Teens Media Presenter" },
+      { property: "og:title", content: "Teens Media Presenter - Control Panel" },
       {
         property: "og:description",
         content:
@@ -514,9 +516,44 @@ function ControlPanel() {
           ? direction === 1
             ? 0
             : chapterVerses.length - 1
-          : Math.min(Math.max(currentIndex + direction, 0), chapterVerses.length - 1);
-      const next = chapterVerses[nextIndex];
-      if (next) goLive([next]);
+          : currentIndex + direction;
+
+      if (nextIndex >= 0 && nextIndex < chapterVerses.length) {
+        const next = chapterVerses[nextIndex];
+        if (next) goLive([next]);
+        return;
+      }
+
+      // Ran off the end/start of the current chapter - roll into the next
+      // (or previous) chapter, crossing into the neighboring book once the
+      // current book's chapters are exhausted.
+      if (navBook && navChapter !== null) {
+        const targetChapter = navChapter + direction;
+
+        if (targetChapter >= 1 && targetChapter <= navBook.chapters) {
+          const data = navBookData ?? (await loadBook(navBook.bookNum));
+          const verses = data.verses.filter((v) => v.chapter === targetChapter);
+          const next = direction === 1 ? verses[0] : verses[verses.length - 1];
+          if (next) {
+            openBook(navBook, targetChapter);
+            goLive([next]);
+          }
+          return;
+        }
+
+        const neighborMeta = getBookMeta(navBook.bookNum + direction);
+        if (neighborMeta) {
+          const neighborData = await loadBook(neighborMeta.bookNum);
+          const targetChapterNum = direction === 1 ? 1 : neighborMeta.chapters;
+          const verses = neighborData.verses.filter((v) => v.chapter === targetChapterNum);
+          const next = direction === 1 ? verses[0] : verses[verses.length - 1];
+          if (next) {
+            openBook(neighborMeta, targetChapterNum);
+            goLive([next]);
+          }
+        }
+        // else: start/end of the whole Bible - nothing further to step to.
+      }
       return;
     }
 
@@ -572,45 +609,18 @@ function ControlPanel() {
   }, [searchOpen]);
 
   // Global shortcuts.
-  useEffect(() => {
-    const onKeyDown = (e: KeyboardEvent) => {
-      const target = e.target as HTMLElement | null;
-      const isTyping = target?.tagName === "INPUT" || target?.tagName === "TEXTAREA";
-
-      if ((e.key === "k" && (e.metaKey || e.ctrlKey)) || (!isTyping && e.key === "/")) {
-        e.preventDefault();
-        setSearchOpen(true);
-        inputRef.current?.focus();
-        inputRef.current?.select();
-        return;
-      }
-
-      if (e.key === "Escape") {
-        if (isTyping) {
-          setSearchOpen(false);
-          (target as HTMLInputElement).blur();
-          return;
-        }
-        e.preventDefault();
-        toggleBlank();
-        return;
-      }
-
-      if (isTyping) return;
-
-      if (e.key === "ArrowDown" || e.key === "ArrowRight") {
-        e.preventDefault();
-        void step(1);
-      } else if (e.key === "ArrowUp" || e.key === "ArrowLeft") {
-        e.preventDefault();
-        void step(-1);
-      }
-    };
-
-    window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [chapterVerses, navBookData, liveVerseId, live]);
+  useShortcuts({
+    onOpenSearch: () => {
+      setSearchOpen(true);
+      inputRef.current?.focus();
+      inputRef.current?.select();
+    },
+    onCloseSearch: () => setSearchOpen(false),
+    onEscape: toggleBlank,
+    onStepNext: () => void step(1),
+    onStepPrev: () => void step(-1),
+    deps: [chapterVerses, navBookData, navBook, navChapter, liveVerseId, live],
+  });
 
   const onSearchKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (!searchOpen && (e.key === "ArrowDown" || e.key === "Enter")) setSearchOpen(true);

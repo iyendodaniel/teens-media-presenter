@@ -3,6 +3,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { ListPlus, Music, Plus, Search, Trash2, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useController } from "@/hooks/use-presenter-sync";
+import { useShortcuts } from "@/hooks/use-shortcuts";
 import { useService, useSongs } from "@/hooks/use-media-library";
 import { searchSongs, stepSection, type Song, type SongSection } from "@/lib/songs";
 import { previewVerseFontSize } from "@/lib/verse-font-size";
@@ -10,7 +11,7 @@ import { previewVerseFontSize } from "@/lib/verse-font-size";
 export const Route = createFileRoute("/lyrics")({
   head: () => ({
     meta: [
-      { title: "Lyrics Control Panel - Teens Media Presenter" },
+      { title: "Lyrics - Teens Media Presenter" },
       {
         name: "description",
         content: "Song/lyrics control panel: search, edit sections, preview then GO LIVE.",
@@ -83,37 +84,26 @@ function LyricsPanel() {
   }, [create]);
 
   /* --- keyboard shortcuts: Esc to blank, Up/Down to step sections -------- */
-  useEffect(() => {
-    const onKeyDown = (e: KeyboardEvent) => {
-      const target = e.target as HTMLElement | null;
-      const isTyping = target?.tagName === "INPUT" || target?.tagName === "TEXTAREA";
-      if (isTyping) return;
-
-      if (e.key === "Escape") {
-        e.preventDefault();
-        push({ mode: "blank" });
-        return;
-      }
+  useShortcuts({
+    onEscape: () => push({ mode: "blank" }),
+    onStepNext: () => {
       if (!selectedSong || !selectedSectionId) return;
-      if (e.key === "ArrowDown" || e.key === "ArrowRight") {
-        e.preventDefault();
-        const next = stepSection(selectedSong, selectedSectionId, 1);
-        if (next) {
-          setSelectedSectionId(next.id);
-          goLive(selectedSong, next);
-        }
-      } else if (e.key === "ArrowUp" || e.key === "ArrowLeft") {
-        e.preventDefault();
-        const prev = stepSection(selectedSong, selectedSectionId, -1);
-        if (prev) {
-          setSelectedSectionId(prev.id);
-          goLive(selectedSong, prev);
-        }
+      const next = stepSection(selectedSong, selectedSectionId, 1);
+      if (next) {
+        setSelectedSectionId(next.id);
+        goLive(selectedSong, next);
       }
-    };
-    window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
-  }, [selectedSong, selectedSectionId, goLive, push]);
+    },
+    onStepPrev: () => {
+      if (!selectedSong || !selectedSectionId) return;
+      const prev = stepSection(selectedSong, selectedSectionId, -1);
+      if (prev) {
+        setSelectedSectionId(prev.id);
+        goLive(selectedSong, prev);
+      }
+    },
+    deps: [selectedSong, selectedSectionId, goLive, push],
+  });
 
   return (
     <div className="flex h-screen flex-col bg-background text-foreground">
