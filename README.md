@@ -1,62 +1,64 @@
-# Verse Sync
+# Teens Media Presenter
 
-Build a live-presentation control app called "Teens Media Presenter" - two synced browser windows for live presentation: a Control Panel at / and a chrome-free Output Display at /output.
+A live-presentation control app for church/youth service screens — two synced browser windows, one for the operator, one for the projector.
 
-For now, only build the Scripture feature and the sync mechanism between the two windows. Do not build Lyrics, Media, Timer, or YouTube yet - those come later as separate steps.
+- **Control Panel** (`/`) — where you search, browse, and click "go live"
+- **Output Display** (`/output`) — chrome-free, fullscreen, black background, the thing the congregation actually sees
 
-Sync between windows:
+Right now it's Scripture-only. Lyrics, Media, Timer, and YouTube are next — deliberately left out for now so this ships and gets used instead of sitting half-built.
 
-Use the BroadcastChannel API (with a window.postMessage/localStorage fallback) so the two windows can run on separate monitors and stay in sync
+## Why
 
-A newly opened Output window should immediately catch up to whatever is currently live, not just future updates
+Most "presentation software" for small teams is either bloated ProPresenter-style overkill or a shared Google Slides someone's fat-fingering mid-service. This is the version I actually wanted: type a reference, hit go, it's on the screen — no lag, no fumbling for the right slide.
 
-Show a live windows-connected indicator on the Control Panel
+## What it does
 
-Control Panel (/):
+**Control Panel**
+- Full 66-book Bible, WEB / KJV / ASV (public-domain-safe translations) — books load on demand so nothing downloads until you open it
+- Type a reference straight up (`John 3:16`, `Romans 8:28-31`) and it resolves instantly, or browse book → chapter → verse
+- Click any verse (or range) and it goes live on Output immediately
+- Live preview panel shows exactly what's on the projector right now, no guessing
+- "Blank Output" button to black the screen out mid-service
+- Keyboard shortcuts: ↑ / ↓ to step through verses, Esc to blank/unblank
+- A connection indicator up top tells you if an Output window is even listening
 
-A translation switcher (WEB / KJV / ASV - public-domain-safe translations)
+**Output Display**
+- Fullscreen, black, zero UI — just the verse
+- Big display type that scales itself based on verse length, so a one-liner and a whole paragraph both read fine at the back of the room
+- Content cross-fades on change instead of hard-cutting
+- A newly opened Output window catches up to whatever's already live — you're not stuck re-clicking the verse because someone plugged in a second monitor late
 
-A searchable list of Bible verses, grouped by book, with reference and text
+## How the sync works
 
-Clicking a verse sends it live to the Output Display instantly
+Two windows, same origin, no backend. Control Panel and Output talk over `BroadcastChannel`, with a `localStorage` events fallback for anything that doesn't support it. Every state change gets persisted, so a fresh Output tab pulls the current live state on load instead of showing blank until the next click.
 
-A live preview panel showing exactly what's on Output right now
+No auth, no server, no database — it's a static app. Open two tabs (or throw one on a second monitor) and go.
 
-"Blank Output" button to black out the display
+## Stack
 
-Keyboard shortcuts: arrow keys to move between verses, Esc to blank/unblank
+- React 19 + TanStack Start (file-based routing, SSR-capable, but this app doesn't need the backend bits — everything here runs client-side)
+- Tailwind v4 for styling
+- Vite under the hood
+- Bible data as static JSON, chunked per book (`src/data/bible/books/`), loaded lazily
 
-Output Display (/output):
+Design-wise: near-black stage background, one amber accent color, Barlow for verse text, Bebas Neue for the reference — built to be fast and readable from a distance since this is getting projected, not read on a laptop.
 
-Fullscreen, black background, no UI chrome
-
-Renders the live verse in large display type with the reference shown separately
-
-Blank state is pure black
-
-Content cross-fades on change
-
-Data: scriptures.json with ~60-75 popular verses, each with text in WEB, KJV, and ASV translations, grouped by book. Local-only - no backend, no auth. Everything client-side.
-
-Design direction: near-black background, one bold accent color, clean sans-serif for verse text, a distinct display font or style for the verse reference. Fast and readable at a distance - this will be projected on a screen.
-
-This project was built with [Lovable](https://lovable.dev).
-
-## Build with Lovable
-
-Continue developing this project in the [Lovable editor](https://lovable.dev/projects/a56ae66a-bafb-4edf-a0c5-445306a49ed0).
-
-- **Ship faster**: describe what you want to build and Lovable handles the code.
-- **Stay in sync**: every change made in Lovable is committed straight to this repository.
-- **Full ownership**: this code is yours. Push to `main` on GitHub and your changes sync back into Lovable, ready for your next prompt.
-
-## Development
-
-Prefer working locally? You need Node.js and npm - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating).
+## Running it locally
 
 ```sh
 git clone <this-repository-url>
-cd <repository-name>
-npm i
+cd teens-media-presenter
+npm install
 npm run dev
 ```
+
+Then open the Control Panel in one tab and `/output` in another (or on a second monitor pointed at the projector).
+
+```sh
+npm run build      # production build
+npm run preview    # preview the build
+```
+
+## What's next
+
+Lyrics, Media (images/video), a Timer, and YouTube embedding — same Control Panel / Output pattern, just more content types feeding the same sync bus. Scripture first because it's the one that gets used every single week.
