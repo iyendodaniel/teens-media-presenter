@@ -7,6 +7,7 @@ import { useShortcuts } from "@/hooks/use-shortcuts";
 import {
   DEFAULT_FONT_KEY,
   DEFAULT_FONT_SCALE,
+  LICENSED_TRANSLATIONS,
   MAX_FONT_SCALE,
   MIN_FONT_SCALE,
   SCRIPTURE_FONTS,
@@ -26,10 +27,16 @@ import {
   type Verse,
 } from "@/lib/scriptures";
 import { buildSuggestions, type Suggestion } from "@/lib/search-suggestions";
-import { useMediaLibrary, useMediaUrl, useResolvedUrl, useService } from "@/hooks/use-media-library";
+import {
+  useMediaLibrary,
+  useMediaUrl,
+  useResolvedUrl,
+  useService,
+} from "@/hooks/use-media-library";
 import { MediaStage } from "@/components/media/media-stage";
 import type { MediaItem } from "@/lib/media-library";
 import { previewVerseFontSize } from "@/lib/verse-font-size";
+import { getVerseText } from "@/lib/get-verse-text";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -60,7 +67,8 @@ export const Route = createFileRoute("/")({
  * preview must never go stale just because the operator switched sections.
  */
 function PreviewStage({ live }: { live: LiveState }) {
-  const background = live.mode === "scripture" || live.mode === "song" ? live.background : undefined;
+  const background =
+    live.mode === "scripture" || live.mode === "song" ? live.background : undefined;
   const backgroundUrl = useResolvedUrl(background?.mediaId, background?.src);
 
   if (live.mode === "image" || live.mode === "video") {
@@ -135,11 +143,14 @@ function PreviewStage({ live }: { live: LiveState }) {
   );
 }
 
-/** Joins a verse range into one Output-ready string, e.g. "28 ...text... 29 ...text...". */
-function combineVerses(verses: Verse[], translation: Translation): string {
+/** Joins a verse range into one Output-ready string, e.g. "28 ...text... 29 ...text...".
+ * Async because licensed translations (NIV/MSG/AMP) resolve via API.Bible,
+ * not the static bundle - see src/lib/get-verse-text.ts. */
+async function combineVerses(verses: Verse[], translation: Translation): Promise<string> {
   if (verses.length === 0) return "";
-  if (verses.length === 1) return verses[0]!.text[translation];
-  return verses.map((v) => `${v.verse} ${v.text[translation]}`).join("  ");
+  if (verses.length === 1) return getVerseText(verses[0]!, translation);
+  const texts = await Promise.all(verses.map((v) => getVerseText(v, translation)));
+  return verses.map((v, i) => `${v.verse} ${texts[i]}`).join("  ");
 }
 
 function combineReference(verses: Verse[]): string {
@@ -241,9 +252,11 @@ function ControlPanel() {
   const [translation, setTranslation] = useState<Translation>(() => {
     if (typeof window === "undefined") return "WEB";
     const stored = window.localStorage.getItem(TRANSLATION_KEY);
-    return stored && (TRANSLATIONS as readonly string[]).includes(stored)
-      ? (stored as Translation)
-      : "WEB";
+    const isKnown =
+      !!stored &&
+      ((TRANSLATIONS as readonly string[]).includes(stored) ||
+        LICENSED_TRANSLATIONS.has(stored as Translation));
+    return isKnown ? (stored as Translation) : "WEB";
   });
   const [backgroundId, setBackgroundId] = useState<string | null>(() =>
     typeof window === "undefined" ? null : window.localStorage.getItem(BACKGROUND_KEY),
@@ -430,13 +443,14 @@ function ControlPanel() {
   }, [navBookData, navChapter]);
 
   const goLive = useCallback(
-    (verses: Verse[]) => {
+    async (verses: Verse[]) => {
       if (verses.length === 0) return;
+      const text = await combineVerses(verses, translation);
       push({
         mode: "scripture",
         verseId: verses[0]!.id,
         reference: combineReference(verses),
-        text: combineVerses(verses, translation),
+        text,
         translation,
         background: liveBackground,
         fontScale,
@@ -447,16 +461,17 @@ function ControlPanel() {
   );
 
   const addToService = useCallback(
-    (verses: Verse[]) => {
+    async (verses: Verse[]) => {
       if (verses.length === 0) return;
       const reference = combineReference(verses);
+      const text = await combineVerses(verses, translation);
       service.add({
         type: "scripture",
         label: reference,
         scripture: {
           verseId: verses[0]!.id,
           reference,
-          text: combineVerses(verses, translation),
+          text,
           translation,
         },
       });
@@ -480,7 +495,7 @@ function ControlPanel() {
         const verses = book.verses.filter(
           (v) => v.chapter === s.chapter && v.verse >= s.verseStart && v.verse <= s.verseEnd,
         );
-        goLive(verses);
+        await goLive(verses);
         openBook(s.meta, s.chapter);
       }
       setQuery("");
@@ -520,7 +535,7 @@ function ControlPanel() {
 
       if (nextIndex >= 0 && nextIndex < chapterVerses.length) {
         const next = chapterVerses[nextIndex];
-        if (next) goLive([next]);
+        if (next) await goLive([next]);
         return;
       }
 
@@ -536,7 +551,7 @@ function ControlPanel() {
           const next = direction === 1 ? verses[0] : verses[verses.length - 1];
           if (next) {
             openBook(navBook, targetChapter);
-            goLive([next]);
+            await goLive([next]);
           }
           return;
         }
@@ -549,7 +564,7 @@ function ControlPanel() {
           const next = direction === 1 ? verses[0] : verses[verses.length - 1];
           if (next) {
             openBook(neighborMeta, targetChapterNum);
-            goLive([next]);
+            await goLive([next]);
           }
         }
         // else: start/end of the whole Bible - nothing further to step to.
@@ -559,24 +574,37 @@ function ControlPanel() {
 
     if (live.mode !== "scripture") return;
     const current = navBookData?.verses.find((v) => v.id === live.verseId);
+    // Synthetic fallback when we don't have the book chunk loaded - stepVerse
+    // only reads id/chapter/verse to find the neighbor, never .text, so every
+    // translation key here is just a placeholder to satisfy the Verse type.
     const base: Verse = current ?? {
       id: live.verseId,
       book: "",
       chapter: 0,
       verse: 0,
       ref: live.reference,
-      text: { WEB: live.text, KJV: live.text, ASV: live.text },
+      text: {
+        WEB: live.text,
+        KJV: live.text,
+        ASV: live.text,
+        NIV: live.text,
+        MSG: live.text,
+        AMP: live.text,
+        ESV: live.text,
+      },
     };
     const next = await stepVerse(base, direction);
-    if (next) goLive([next]);
+    if (next) await goLive([next]);
   };
 
   // Keep the live verse in step with the translation switcher.
   useEffect(() => {
     if (live.mode !== "scripture") return;
     const verseInChapter = chapterVerses.find((v) => v.id === live.verseId);
-    if (verseInChapter) {
-      const nextText = verseInChapter.text[translation];
+    if (!verseInChapter) return;
+    let cancelled = false;
+    void getVerseText(verseInChapter, translation).then((nextText) => {
+      if (cancelled) return;
       if (live.translation === translation && live.text === nextText) return;
       push({
         mode: "scripture",
@@ -588,7 +616,10 @@ function ControlPanel() {
         fontScale: live.fontScale,
         fontFamily: live.fontFamily,
       });
-    }
+    });
+    return () => {
+      cancelled = true;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [translation]);
 
@@ -794,21 +825,43 @@ function ControlPanel() {
             </div>
 
             <div className="flex flex-wrap items-center gap-4">
-              <div className="inline-flex w-fit rounded-md border border-border bg-panel p-1">
-                {TRANSLATIONS.map((t) => (
-                  <button
-                    key={t}
-                    onClick={() => setTranslation(t)}
-                    className={cn(
-                      "rounded px-3 py-1 text-xs font-semibold tracking-wide transition-colors",
-                      translation === t
-                        ? "bg-accent text-accent-ink"
-                        : "text-muted-foreground hover:text-foreground",
-                    )}
-                  >
-                    {t}
-                  </button>
-                ))}
+              <div className="flex flex-wrap items-center gap-1">
+                <div className="inline-flex w-fit rounded-md border border-border bg-panel p-1">
+                  {TRANSLATIONS.map((t) => (
+                    <button
+                      key={t}
+                      onClick={() => setTranslation(t)}
+                      className={cn(
+                        "rounded px-3 py-1 text-xs font-semibold tracking-wide transition-colors",
+                        translation === t
+                          ? "bg-accent text-accent-ink"
+                          : "text-muted-foreground hover:text-foreground",
+                      )}
+                    >
+                      {t}
+                    </button>
+                  ))}
+                </div>
+                {/* Licensed translations - fetched live from API.Bible, not
+                    bundled in the static JSON, kept visually separate since
+                    they behave slightly differently (a beat of loading on
+                    first use of a given verse). */}
+                <div className="inline-flex w-fit rounded-md border border-border bg-panel p-1">
+                  {Array.from(LICENSED_TRANSLATIONS).map((t) => (
+                    <button
+                      key={t}
+                      onClick={() => setTranslation(t)}
+                      className={cn(
+                        "rounded px-3 py-1 text-xs font-semibold tracking-wide transition-colors",
+                        translation === t
+                          ? "bg-accent text-accent-ink"
+                          : "text-muted-foreground hover:text-foreground",
+                      )}
+                    >
+                      {t}
+                    </button>
+                  ))}
+                </div>
               </div>
 
               <div className="flex min-w-0 items-center gap-1.5">
@@ -983,7 +1036,7 @@ function ControlPanel() {
                           )}
                         >
                           <button
-                            onClick={() => goLive([verse])}
+                            onClick={() => void goLive([verse])}
                             className="flex min-w-0 flex-1 flex-col items-start gap-0.5 px-3 py-2 text-left"
                           >
                             <span
@@ -995,11 +1048,14 @@ function ControlPanel() {
                               {verse.ref}
                             </span>
                             <span className="line-clamp-1 text-xs text-muted-foreground">
-                              {verse.text[translation]}
+                              {/* Cosmetic list preview only - licensed translations (NIV/MSG/AMP)
+                                  aren't in the static bundle, so don't fire an API call per row;
+                                  fall back to WEB here and let the actual Go Live fetch the real text. */}
+                              {verse.text[translation] ?? verse.text.WEB}
                             </span>
                           </button>
                           <button
-                            onClick={() => addToService([verse])}
+                            onClick={() => void addToService([verse])}
                             aria-label={`Add ${verse.ref} to service`}
                             className="mr-1 shrink-0 rounded p-1 text-muted-foreground opacity-0 transition-opacity hover:bg-panel-raised hover:text-foreground group-hover:opacity-100"
                           >

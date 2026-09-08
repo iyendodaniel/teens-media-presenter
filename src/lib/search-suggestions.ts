@@ -72,7 +72,10 @@ function verseText(meta: BookMeta, chapter: number, verse: number, translation: 
   const book = getCachedBook(meta.bookNum);
   if (!book) return "";
   const v = book.verses.find((x) => x.chapter === chapter && x.verse === verse);
-  return v ? v.text[translation] : "";
+  // Licensed translations (NIV/MSG/AMP) aren't in the static bundle, so
+  // there's nothing to preview here without an API call - and previews
+  // shouldn't be firing API calls for every row in a search list.
+  return v?.text[translation] ?? "";
 }
 
 function versesIn(meta: BookMeta, chapter: number): number {

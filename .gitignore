@@ -20,6 +20,10 @@ dist-ssr
 .wrangler/
 .dev.vars
 
+# Electron desktop build
+/release
+/smoke-test-output
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
@@ -30,3 +34,5 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+# API keys — never commit
+.env

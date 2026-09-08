@@ -11,7 +11,10 @@
  * re-publish authoritative state.
  */
 
-export type Translation = "WEB" | "KJV" | "ASV";
+/** WEB/KJV/ASV ship as static JSON (public domain). NIV/MSG/AMP are licensed
+ * and fetched live from API.Bible per verse — see src/lib/bible-api.ts. */
+export type Translation = "WEB" | "KJV" | "ASV" | "NIV" | "MSG" | "AMP" | "ESV";
+export const LICENSED_TRANSLATIONS = new Set<Translation>(["NIV", "MSG", "AMP", "ESV"]);
 
 export type MediaFitMode = "fit" | "fill" | "center";
 
@@ -103,9 +106,12 @@ export type SyncMessage =
 /** Countdown overlay published independently of LiveState so a timer can show
  * ALONGSIDE whatever's currently live (scripture, a slide, etc) rather than
  * replacing it. `null` means "not shown on Output". */
-export type TimerOverlayState =
-  | { totalSeconds: number; remaining: number; running: boolean; alarming: boolean }
-  | null;
+export type TimerOverlayState = {
+  totalSeconds: number;
+  remaining: number;
+  running: boolean;
+  alarming: boolean;
+} | null;
 
 const CHANNEL = "teens-media-presenter";
 const STATE_KEY = "tmp:live-state";
