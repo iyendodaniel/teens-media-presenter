@@ -4,6 +4,7 @@ import { MediaStage } from "@/components/media/media-stage";
 import { useResolvedUrl } from "@/hooks/use-media-library";
 import { DEFAULT_FONT_SCALE, fontFamilyFor } from "@/lib/presenter-sync";
 import { verseFontSize } from "@/lib/verse-font-size";
+import { useFitText } from "@/hooks/use-fit-text";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/output")({
@@ -47,6 +48,13 @@ function OutputPage() {
     live.mode === "scripture" || live.mode === "song" ? live.background : undefined;
   const backgroundUrl = useResolvedUrl(background?.mediaId, background?.src);
 
+  // Guarantees the verse + reference block never overflows the screen, no
+  // matter how large the Text Size slider pushes the base font-size - see
+  // use-fit-text.ts for why the clamp()-based sizing alone isn't enough.
+  const { containerRef, contentRef, scale } = useFitText<HTMLDivElement, HTMLDivElement>([
+    live.mode === "scripture" || live.mode === "song" ? live.revision : null,
+  ]);
+
   if (live.mode === "image" || live.mode === "video") {
     return (
       <div className="fixed inset-0 overflow-hidden bg-stage">
@@ -61,6 +69,7 @@ function OutputPage() {
       {live.mode === "scripture" || live.mode === "song" ? (
         <div
           key={live.revision}
+          ref={containerRef}
           className="stage-fade-enter relative flex h-full w-full flex-col items-center justify-center gap-10 px-[6vw] py-[6vh] text-center"
         >
           {backgroundUrl ? (
@@ -73,7 +82,11 @@ function OutputPage() {
               <div className="absolute inset-0 bg-black/55" />
             </>
           ) : null}
-          <div className="relative z-10 flex flex-col items-center gap-10">
+          <div
+            ref={contentRef}
+            className="relative z-10 flex flex-col items-center gap-10"
+            style={{ transform: `scale(${scale})` }}
+          >
             <p
               className="max-w-[86vw] whitespace-pre-line font-medium leading-[1.35] text-foreground"
               style={{
