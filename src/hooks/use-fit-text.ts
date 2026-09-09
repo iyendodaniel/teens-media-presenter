@@ -55,7 +55,22 @@ export function useFitText<
     fit();
     const ro = new ResizeObserver(fit);
     ro.observe(container);
-    return () => ro.disconnect();
+
+    // Fonts load via Google Fonts with display=swap, so the first paint can
+    // use a fallback font with different metrics than the real one. If the
+    // real font swaps in after we've already measured, the box can grow and
+    // overflow again - re-fit once web fonts are actually ready to catch
+    // that. document.fonts.ready resolves immediately if fonts were already
+    // loaded (e.g. cached from a previous verse), so this is a no-op then.
+    let cancelled = false;
+    void document.fonts?.ready?.then(() => {
+      if (!cancelled) fit();
+    });
+
+    return () => {
+      cancelled = true;
+      ro.disconnect();
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, deps);
 
