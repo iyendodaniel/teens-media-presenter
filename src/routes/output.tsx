@@ -51,8 +51,17 @@ function OutputPage() {
   // Guarantees the verse + reference block never overflows the screen, no
   // matter how large the Text Size slider pushes the base font-size - see
   // use-fit-text.ts for why the clamp()-based sizing alone isn't enough.
+  //
+  // Keyed directly on fontScale/fontFamily/text rather than just
+  // live.revision: revision is Date.now(), and a fast slider drag can fire
+  // two pushes within the same millisecond, so revision alone can miss a
+  // change even though the rendered font-size did change.
+  const isScriptureOrSong = live.mode === "scripture" || live.mode === "song";
   const { containerRef, contentRef, scale } = useFitText<HTMLDivElement, HTMLDivElement>([
-    live.mode === "scripture" || live.mode === "song" ? live.revision : null,
+    isScriptureOrSong ? live.revision : null,
+    isScriptureOrSong ? live.fontScale : null,
+    isScriptureOrSong ? live.fontFamily : null,
+    isScriptureOrSong ? live.text : null,
   ]);
 
   if (live.mode === "image" || live.mode === "video") {
