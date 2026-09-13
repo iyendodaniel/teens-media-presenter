@@ -1,13 +1,14 @@
 import { useLayoutEffect, useRef, useState } from "react";
 
 /**
- * Hard backstop on top of the clamp()-based auto-fit tiers in
- * verse-font-size.ts. Those get the font size close using a character-count
- * heuristic, but the operator's Text Size slider (up to MAX_FONT_SCALE) can
- * still push it past what actually fits - especially for a long verse at a
- * high scale. This measures the real rendered box and shrinks with a CSS
- * transform if it doesn't fit, so Output can never clip text off-screen no
- * matter how the slider is set.
+ * Backstop on top of the clamp()-based auto-fit tiers in verse-font-size.ts.
+ * Those pick a font size from a character-count heuristic, but that's just a
+ * starting point - a long verse at a high Text Size slider setting can still
+ * run past what fits, and a short verse at a low slider setting can leave
+ * most of the screen empty. This measures the real rendered box against the
+ * actual screen and applies a corrective CSS transform either way: shrink to
+ * guarantee Output never clips text off-screen, or grow so every verse
+ * spreads to fill as much of the screen as it can.
  *
  * One measurement, not an iterative loop: `transform: scale()` doesn't
  * affect layout size, so we measure the content at its natural (unscaled)
@@ -47,8 +48,10 @@ export function useFitText<
       if (naturalW === 0 || naturalH === 0) return;
 
       // 0.98 leaves a small safety margin so text doesn't sit flush against
-      // the very edge of the projected area.
-      const next = Math.min(1, availW / naturalW, availH / naturalH) * 0.98;
+      // the very edge of the projected area. No upper cap here anymore -
+      // whichever axis (width or height) runs out of room first still bounds
+      // it, so it can grow to fill the screen without ever overflowing.
+      const next = Math.min(availW / naturalW, availH / naturalH) * 0.98;
       setScale(Number.isFinite(next) && next > 0 ? next : 1);
     };
 
