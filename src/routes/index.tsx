@@ -145,12 +145,20 @@ function PreviewStage({ live }: { live: LiveState }) {
 
 /** Joins a verse range into one Output-ready string, e.g. "28 ...text... 29 ...text...".
  * Async because licensed translations (NIV/MSG/AMP) resolve via API.Bible,
- * not the static bundle - see src/lib/get-verse-text.ts. */
-async function combineVerses(verses: Verse[], translation: Translation): Promise<string> {
+ * not the static bundle - see src/lib/get-verse-text.ts.
+ *
+ * Returns null if a licensed translation couldn't be fetched (offline,
+ * unreachable, etc.) - getVerseText already shows a toast explaining why, so
+ * callers just bail on null instead of pushing broken/partial text live. */
+async function combineVerses(verses: Verse[], translation: Translation): Promise<string | null> {
   if (verses.length === 0) return "";
-  if (verses.length === 1) return getVerseText(verses[0]!, translation);
-  const texts = await Promise.all(verses.map((v) => getVerseText(v, translation)));
-  return verses.map((v, i) => `${v.verse} ${texts[i]}`).join("  ");
+  try {
+    if (verses.length === 1) return await getVerseText(verses[0]!, translation);
+    const texts = await Promise.all(verses.map((v) => getVerseText(v, translation)));
+    return verses.map((v, i) => `${v.verse} ${texts[i]}`).join("  ");
+  } catch {
+    return null;
+  }
 }
 
 function combineReference(verses: Verse[]): string {
@@ -446,6 +454,7 @@ function ControlPanel() {
     async (verses: Verse[]) => {
       if (verses.length === 0) return;
       const text = await combineVerses(verses, translation);
+      if (text === null) return;
       push({
         mode: "scripture",
         verseId: verses[0]!.id,
@@ -465,6 +474,7 @@ function ControlPanel() {
       if (verses.length === 0) return;
       const reference = combineReference(verses);
       const text = await combineVerses(verses, translation);
+      if (text === null) return;
       service.add({
         type: "scripture",
         label: reference,
@@ -603,20 +613,26 @@ function ControlPanel() {
     const verseInChapter = chapterVerses.find((v) => v.id === live.verseId);
     if (!verseInChapter) return;
     let cancelled = false;
-    void getVerseText(verseInChapter, translation).then((nextText) => {
-      if (cancelled) return;
-      if (live.translation === translation && live.text === nextText) return;
-      push({
-        mode: "scripture",
-        verseId: live.verseId,
-        reference: live.reference,
-        text: nextText,
-        translation,
-        background: live.background,
-        fontScale: live.fontScale,
-        fontFamily: live.fontFamily,
+    void getVerseText(verseInChapter, translation)
+      .then((nextText) => {
+        if (cancelled) return;
+        if (live.translation === translation && live.text === nextText) return;
+        push({
+          mode: "scripture",
+          verseId: live.verseId,
+          reference: live.reference,
+          text: nextText,
+          translation,
+          background: live.background,
+          fontScale: live.fontScale,
+          fontFamily: live.fontFamily,
+        });
+      })
+      .catch(() => {
+        // getVerseText already toasted why (offline / unreachable). Leaving
+        // Output on whatever was live before rather than clearing it, so the
+        // operator can just fix their connection and switch again.
       });
-    });
     return () => {
       cancelled = true;
     };
