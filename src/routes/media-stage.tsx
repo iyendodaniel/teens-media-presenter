@@ -1,6 +1,7 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { LiveState, MediaFitMode } from "@/lib/presenter-sync";
 import { resolveBlobUrl } from "@/lib/media-store";
+import { youtubeIdFromEmbedUrl } from "@/lib/media-library";
 
 export function fitClass(fit: MediaFitMode): string {
   if (fit === "fill") return "h-full w-full object-cover";
@@ -51,32 +52,17 @@ type Props = {
 export function MediaStage({ state, forceMuted = false, onTime }: Props) {
   const url = useLiveMediaUrl(state);
   const videoRef = useRef<HTMLVideoElement>(null);
+  const embedRef = useRef<HTMLIFrameElement>(null);
   const appliedSeek = useRef<number>(-1);
+  const appliedEmbedSeek = useRef<number>(-1);
 
   const playing = state.mode === "video" ? state.playing : false;
   const seekRev = state.mode === "video" ? state.seekRev : 0;
   const seekTo = state.mode === "video" ? state.seekTo : 0;
-  const mediaId = state.mode === "video" ? state.mediaId : null;
-
-  // Sticky autoplay-muted fallback. Browsers block programmatic unmuted
-  // autoplay unless this document has "media engagement" - the Output
-  // window usually doesn't. When a play() attempt gets rejected we force
-  // muted and remember that in state (not just on the DOM node), because a
-  // re-render would otherwise snap `muted` back to state.muted (false) and
-  // the next play() attempt would fail again. Resets when a genuinely new
-  // video comes in, so a fresh item still gets one honest unmuted attempt.
-  const [autoplayMuted, setAutoplayMuted] = useState(false);
-  useEffect(() => setAutoplayMuted(false), [mediaId]);
-
-  const attemptPlay = useCallback((video: HTMLVideoElement) => {
-    void video.play().catch(() => {
-      video.muted = true;
-      setAutoplayMuted(true);
-      void video.play().catch(() => {
-        /* still blocked - needs a real click on the Output window */
-      });
-    });
-  }, []);
+  // Vimeo also sets embed:true but speaks a different postMessage protocol
+  // than the one below - only YouTube gets play/pause/seek control this way,
+  // detected by whether we can pull a video id back out of the embed URL.
+  const youtubeId = state.mode === "video" && state.embed ? youtubeIdFromEmbedUrl(url ?? "") : null;
 
   useEffect(() => {
     const video = videoRef.current;
@@ -90,11 +76,64 @@ export function MediaStage({ state, forceMuted = false, onTime }: Props) {
       }
     }
     if (playing) {
-      attemptPlay(video);
+      void video.play().catch(() => {
+        // Autoplay policies can block unmuted playback; fall back to muted.
+        video.muted = true;
+        void video.play().catch(() => {});
+      });
     } else {
       video.pause();
     }
-  }, [playing, seekRev, seekTo, url, state.mode, attemptPlay]);
+  }, [playing, seekRev, seekTo, url, state.mode]);
+
+  // Drives play/pause/seek on THIS window's own YouTube iframe via
+  // postMessage, from the same synced playing/seekRev/seekTo state that
+  // drives the plain <video> effect above. Runs in BOTH windows - Output
+  // and the (muted) Control Panel mirror both actually play the video, kept
+  // in lockstep by reacting to the same shared state, so pausing on either
+  // one pauses both. Only the audio differs (see the mute effect below).
+  useEffect(() => {
+    const iframe = embedRef.current;
+    if (!iframe || !youtubeId) return;
+    const win = iframe.contentWindow;
+    if (!win) return;
+
+    const post = (func: string, args: unknown[] = []) =>
+      win.postMessage(JSON.stringify({ event: "command", func, args }), "https://www.youtube.com");
+
+    if (appliedEmbedSeek.current !== seekRev) {
+      appliedEmbedSeek.current = seekRev;
+      post("seekTo", [seekTo, true]);
+    }
+    post(playing ? "playVideo" : "pauseVideo");
+  }, [playing, seekRev, seekTo, youtubeId, url]);
+
+  // Silences the Control Panel's copy so there's still only ONE audible
+  // source even though both windows are genuinely playing the video. Fires
+  // repeatedly for a couple seconds after the iframe (re)loads, since
+  // YouTube's player briefly ignores postMessage commands sent before it's
+  // actually ready - a single mute call right on mount can land too early
+  // and get dropped, letting a flash of audio through.
+  useEffect(() => {
+    const iframe = embedRef.current;
+    if (!iframe || !youtubeId || !forceMuted) return;
+    const win = iframe.contentWindow;
+    if (!win) return;
+
+    const sendMute = () =>
+      win.postMessage(
+        JSON.stringify({ event: "command", func: "mute" }),
+        "https://www.youtube.com",
+      );
+    sendMute();
+    let attempts = 0;
+    const id = setInterval(() => {
+      sendMute();
+      attempts += 1;
+      if (attempts >= 6) clearInterval(id);
+    }, 300);
+    return () => clearInterval(id);
+  }, [youtubeId, forceMuted, url]);
 
   if (state.mode === "image") {
     return (
@@ -112,15 +151,33 @@ export function MediaStage({ state, forceMuted = false, onTime }: Props) {
   }
 
   if (state.mode === "video" && state.embed) {
-    // YouTube/Vimeo: src is an iframe embed URL, not a video file. Playback
-    // transport (play/pause) isn't wired for embeds - restart re-mounts the
-    // iframe via the key below, which is the one control that reliably works
-    // across providers without a postMessage integration per provider.
+    // YouTube: both windows genuinely load and play the same video, kept in
+    // lockstep by the effects above - so Pause on either window pauses
+    // both. The Control Panel's copy is muted (see above), so there's still
+    // only one audible source even though two copies are actually playing.
+    //
+    // Vimeo speaks a different postMessage protocol that isn't wired up
+    // here, so muting its Control Panel copy isn't possible - it falls back
+    // to a placeholder there instead of risking a second, unmuted copy.
+    if (forceMuted && !youtubeId) {
+      return (
+        <div className="relative flex h-full w-full items-center justify-center overflow-hidden bg-stage">
+          <span className="absolute bottom-2 right-2 rounded bg-black/60 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-white">
+            Live on Output
+          </span>
+        </div>
+      );
+    }
     return (
       <div className="flex h-full w-full items-center justify-center overflow-hidden bg-stage">
         {url ? (
           <iframe
-            key={`${state.mediaId}-${seekRev}`}
+            // YouTube's iframe stays mounted across a restart - restart is
+            // just a seekTo(0) command via the effect above. Vimeo has no
+            // such command wired here, so it keeps the old behaviour of
+            // remounting the iframe on seekRev to restart.
+            ref={embedRef}
+            key={youtubeId ? state.mediaId : `${state.mediaId}-${seekRev}`}
             src={url}
             title={state.name}
             className="h-full w-full border-0"
@@ -143,7 +200,7 @@ export function MediaStage({ state, forceMuted = false, onTime }: Props) {
             className={fitClass(state.fit)}
             playsInline
             loop={state.loop}
-            muted={forceMuted || state.muted || autoplayMuted}
+            muted={forceMuted || state.muted}
             onLoadedMetadata={(e) => {
               const video = e.currentTarget;
               try {
@@ -151,7 +208,7 @@ export function MediaStage({ state, forceMuted = false, onTime }: Props) {
               } catch {
                 /* ignore */
               }
-              if (playing) attemptPlay(video);
+              if (playing) void video.play().catch(() => {});
             }}
             onTimeUpdate={(e) =>
               onTime?.(e.currentTarget.currentTime, e.currentTarget.duration || 0)

@@ -247,6 +247,23 @@ function hostname(url: string): string {
 }
 
 /**
+ * Extracts the video id back out of an embed URL built above, e.g.
+ * "https://www.youtube.com/embed/dQw4w9WgXcQ?..." -> "dQw4w9WgXcQ". Used to
+ * show a static thumbnail (img.youtube.com) wherever we want a preview
+ * without loading a second live player alongside Output's.
+ */
+export function youtubeIdFromEmbedUrl(url: string): string | null {
+  try {
+    const parsed = new URL(url);
+    if (!parsed.hostname.endsWith("youtube.com")) return null;
+    const parts = parsed.pathname.split("/").filter(Boolean);
+    return parts[parts.length - 1] ?? null;
+  } catch {
+    return null;
+  }
+}
+
+/**
  * Builds a "linked" MediaItem from a pasted URL. YouTube/Vimeo links become
  * embeddable items (`embed: true`); direct image/video links are used as-is.
  * When the file type can't be inferred from the URL, returns "ambiguous" so
@@ -271,6 +288,11 @@ export function createLinkedItem(
 
   const youtube = url.match(YOUTUBE_RE);
   if (youtube?.[1]) {
+    // enablejsapi=1 lets the Output window drive play/pause/seek on its own
+    // iframe via postMessage (see media-stage.tsx) instead of the Control
+    // Panel loading a second, independent copy of the video. origin is the
+    // security check YouTube's player does on incoming postMessage commands.
+    const origin = typeof window !== "undefined" ? window.location.origin : "";
     return {
       ok: true,
       item: {
@@ -278,7 +300,7 @@ export function createLinkedItem(
         name: `YouTube - ${youtube[1]}`,
         kind: "video",
         source: "linked",
-        url: `https://www.youtube.com/embed/${youtube[1]}?autoplay=1&rel=0`,
+        url: `https://www.youtube.com/embed/${youtube[1]}?autoplay=1&rel=0&enablejsapi=1&origin=${encodeURIComponent(origin)}`,
         embed: true,
         addedAt: Date.now(),
         collection,

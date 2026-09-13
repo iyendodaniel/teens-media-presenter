@@ -34,7 +34,13 @@ import {
 import { useFolderLibrary } from "@/hooks/use-folder-library";
 import { useSplitRatio } from "@/hooks/use-split-ratio";
 import { MediaStage, fitClass } from "@/components/media/media-stage";
-import { createLinkedItem, formatDuration, searchMedia, type MediaItem } from "@/lib/media-library";
+import {
+  createLinkedItem,
+  formatDuration,
+  searchMedia,
+  youtubeIdFromEmbedUrl,
+  type MediaItem,
+} from "@/lib/media-library";
 import { parseOrderOfService } from "@/lib/order-of-service";
 import { isLiveCapable, liveStateForServiceItem } from "@/lib/service";
 import type { FolderEntry } from "@/lib/media-folder";
@@ -197,10 +203,21 @@ function MediaThumb({
 
 function SelectedPreview({ item, fit }: { item: MediaItem; fit: MediaFitMode }) {
   const url = useMediaUrl(item);
+  const youtubeId = item.embed ? youtubeIdFromEmbedUrl(url ?? "") : null;
   return (
     <div className="flex h-full w-full items-center justify-center overflow-hidden bg-stage">
       {url ? (
-        item.kind === "video" ? (
+        item.embed ? (
+          youtubeId ? (
+            <img
+              src={`https://img.youtube.com/vi/${youtubeId}/hqdefault.jpg`}
+              alt={item.name}
+              className={fitClass(fit)}
+            />
+          ) : (
+            <span className="text-xs text-muted-foreground">{item.name}</span>
+          )
+        ) : item.kind === "video" ? (
           <video src={url} className={fitClass(fit)} muted playsInline preload="metadata" />
         ) : (
           <img src={url} alt={item.name} className={fitClass(fit)} />
@@ -344,6 +361,12 @@ function FolderTab({
 
 function MediaPanel() {
   const { live, outputs, push } = useController();
+
+  // Vimeo embeds don't understand the YouTube postMessage command protocol
+  // wired up in media-stage.tsx, so Play/Pause would silently do nothing for
+  // them - only show those as usable for a YouTube embed specifically.
+  const liveIsNonYoutubeEmbed =
+    live.mode === "video" && live.embed && !youtubeIdFromEmbedUrl(live.src ?? "");
   const library = useMediaLibrary();
   const service = useService();
   const folder = useFolderLibrary();
@@ -1182,14 +1205,14 @@ function MediaPanel() {
           <div className="grid grid-cols-3 gap-2">
             <button
               onClick={() => setPlaying(true)}
-              disabled={live.mode !== "video" || live.playing || live.embed}
+              disabled={live.mode !== "video" || live.playing || liveIsNonYoutubeEmbed}
               className="flex items-center justify-center gap-1.5 rounded-md border border-border bg-panel py-2.5 text-sm font-semibold text-foreground transition-colors hover:bg-panel-raised disabled:opacity-40"
             >
               <Play className="h-4 w-4" /> Play
             </button>
             <button
               onClick={() => setPlaying(false)}
-              disabled={live.mode !== "video" || !live.playing || live.embed}
+              disabled={live.mode !== "video" || !live.playing || liveIsNonYoutubeEmbed}
               className="flex items-center justify-center gap-1.5 rounded-md border border-border bg-panel py-2.5 text-sm font-semibold text-foreground transition-colors hover:bg-panel-raised disabled:opacity-40"
             >
               <Pause className="h-4 w-4" /> Pause
@@ -1307,8 +1330,8 @@ function MediaPanel() {
             <p className="text-xs text-muted-foreground">
               One line per item. Numbering is optional. Lines that match a filename in your media
               library (e.g. "05 Announcement.mp4") are linked automatically - everything else
-              becomes a plain note, same as adding one by hand. Adds to the end of the current
-              list by default; use "Replace service" to start over instead.
+              becomes a plain note, same as adding one by hand. Adds to the end of the current list
+              by default; use "Replace service" to start over instead.
             </p>
             <textarea
               value={orderText}
@@ -1357,7 +1380,8 @@ function LiveMirror({
   live: LiveState;
   onTime: (current: number, duration: number) => void;
 }) {
-  const background = live.mode === "scripture" || live.mode === "song" ? live.background : undefined;
+  const background =
+    live.mode === "scripture" || live.mode === "song" ? live.background : undefined;
   const backgroundUrl = useResolvedUrl(background?.mediaId, background?.src);
 
   if (live.mode === "image" || live.mode === "video") {
