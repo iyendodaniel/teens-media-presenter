@@ -161,8 +161,10 @@ function newId() {
     : Math.random().toString(36).slice(2);
 }
 
-/** Grabs a poster frame + duration from a video file, off the main render path. */
-async function videoMeta(
+/** Grabs a poster frame + duration from a video file, off the main render path.
+ * Also used by the Folder tab (media.tsx) to thumbnail videos read straight
+ * off disk, the same way imported videos already get a poster frame here. */
+export async function videoMeta(
   url: string,
 ): Promise<{ thumb?: string | undefined; duration?: number | undefined }> {
   return new Promise((resolve) => {

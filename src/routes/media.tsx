@@ -38,6 +38,7 @@ import {
   createLinkedItem,
   formatDuration,
   searchMedia,
+  videoMeta,
   youtubeIdFromEmbedUrl,
   type MediaItem,
 } from "@/lib/media-library";
@@ -243,6 +244,17 @@ function FolderThumb({ entry, onSelect }: { entry: FolderEntry; onSelect: () => 
         if (cancelled) return;
         objectUrl = URL.createObjectURL(file);
         setPreview(objectUrl);
+      });
+    } else if (entry.kind === "video") {
+      // Same poster-frame grab used for imported videos (media-library.ts) -
+      // read the file, load it into a hidden <video>, snapshot a frame.
+      // Falls back to the Film icon below if it can't (unsupported codec etc).
+      void entry.handle.getFile().then(async (file) => {
+        if (cancelled) return;
+        const url = URL.createObjectURL(file);
+        const meta = await videoMeta(url);
+        URL.revokeObjectURL(url);
+        if (!cancelled && meta.thumb) setPreview(meta.thumb);
       });
     }
     return () => {
