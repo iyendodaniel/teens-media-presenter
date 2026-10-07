@@ -19,9 +19,15 @@ export type Song = {
   artist?: string | undefined;
   ccli?: string | undefined;
   sections: SongSection[];
+  /** Per-song display style - saved with the song so it comes back next time. */
+  position?: LyricsPosition | undefined;
+  fontScale?: number | undefined;
+  background?: StageBackground | undefined;
   addedAt: number;
   lastUsedAt?: number | undefined;
 };
+
+import type { LyricsPosition, StageBackground } from "./presenter-sync";
 
 const ITEMS_KEY = "tmp.songs.items";
 const EVENT = "tmp:songs-changed";
@@ -105,4 +111,66 @@ export function stepSection(song: Song, currentSectionId: string, direction: 1 |
   const idx = song.sections.findIndex((s) => s.id === currentSectionId);
   if (idx === -1) return undefined;
   return song.sections[idx + direction];
+}
+
+/* ------------------------------------------------------- paste-a-whole-song */
+
+export type SplitMode = "auto" | "blocks" | "lines" | "pairs";
+
+const HEADER_RE =
+  /^\s*[[(]?\s*(verse|chorus|pre-?chorus|bridge|intro|outro|tag|refrain|hook|interlude)\s*(\d+)?\s*[\])]?\s*:?\s*$/i;
+
+function titleCase(s: string) {
+  return s.charAt(0).toUpperCase() + s.slice(1).toLowerCase();
+}
+
+/**
+ * Turns one big pasted lyric into sections.
+ *  - "blocks": a blank line starts a new section (how lyrics are normally pasted)
+ *  - "lines":  every line is its own section (one slide per line)
+ *  - "pairs":  every 2 lines is a section
+ *  - "auto":   blocks if the paste has blank lines, otherwise lines
+ * Headers like "[Chorus]" or "Verse 2:" are used as labels, not as lyrics.
+ */
+export function splitLyrics(raw: string, mode: SplitMode = "auto"): Array<{ label: string; text: string }> {
+  const blocks: Array<{ label?: string; lines: string[] }> = [];
+  let current: { label?: string; lines: string[] } = { lines: [] };
+  const flush = () => {
+    if (current.lines.length) blocks.push(current);
+    current = { lines: [] };
+  };
+
+  for (const line of raw.replace(/\r\n?/g, "\n").split("\n")) {
+    const header = HEADER_RE.exec(line);
+    if (header) {
+      flush();
+      current = { label: `${titleCase(header[1]!)}${header[2] ? ` ${header[2]}` : ""}`, lines: [] };
+    } else if (!line.trim()) {
+      flush();
+    } else {
+      current.lines.push(line.trim());
+    }
+  }
+  flush();
+
+  const effective: SplitMode = mode === "auto" ? (blocks.length > 1 ? "blocks" : "lines") : mode;
+  const size = effective === "pairs" ? 2 : 1;
+
+  const out: Array<{ label: string; text: string }> = [];
+  let verseNo = 0;
+  for (const block of blocks) {
+    const chunks: string[][] = [];
+    if (effective === "blocks") chunks.push(block.lines);
+    else for (let i = 0; i < block.lines.length; i += size) chunks.push(block.lines.slice(i, i + size));
+
+    chunks.forEach((chunk, i) => {
+      const label = block.label
+        ? chunks.length > 1
+          ? `${block.label} (${i + 1})`
+          : block.label
+        : `Verse ${++verseNo}`;
+      out.push({ label, text: chunk.join("\n") });
+    });
+  }
+  return out;
 }

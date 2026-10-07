@@ -1,11 +1,19 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { ListPlus, Music, Plus, Search, Trash2, X } from "lucide-react";
+import { ClipboardPaste, ListPlus, Music, Plus, Search, Trash2, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useController } from "@/hooks/use-presenter-sync";
 import { useShortcuts } from "@/hooks/use-shortcuts";
-import { useService, useSongs } from "@/hooks/use-media-library";
-import { searchSongs, stepSection, type Song, type SongSection } from "@/lib/songs";
+import { useMediaLibrary, useService, useSongs } from "@/hooks/use-media-library";
+import {
+  searchSongs,
+  splitLyrics,
+  stepSection,
+  type Song,
+  type SongSection,
+  type SplitMode,
+} from "@/lib/songs";
+import type { LyricsPosition, StageBackground } from "@/lib/presenter-sync";
 import { previewVerseFontSize } from "@/lib/verse-font-size";
 
 export const Route = createFileRoute("/lyrics")({
@@ -23,9 +31,31 @@ export const Route = createFileRoute("/lyrics")({
 
 function LyricsPanel() {
   const { live, outputs, push } = useController();
-  const { songs, create, update, remove, markUsed, addSection, updateSection, removeSection } =
-    useSongs();
+  const {
+    songs,
+    create,
+    update,
+    remove,
+    markUsed,
+    addSection,
+    updateSection,
+    removeSection,
+    importSections,
+  } = useSongs();
   const service = useService();
+  const library = useMediaLibrary();
+
+  // Anything that can sit behind lyrics: images, GIFs, and video files
+  // (not YouTube/Vimeo embeds - those are iframes, they can't be a looping bg).
+  const backgroundChoices = useMemo(
+    () => library.items.filter((i) => !i.embed),
+    [library.items],
+  );
+
+  const [showPaste, setShowPaste] = useState(false);
+  const [pasteText, setPasteText] = useState("");
+  const [splitMode, setSplitMode] = useState<SplitMode>("auto");
+  const pastePreview = useMemo(() => splitLyrics(pasteText, splitMode), [pasteText, splitMode]);
 
   const [query, setQuery] = useState("");
   const [selectedSongId, setSelectedSongId] = useState<string | null>(null);
@@ -60,6 +90,9 @@ function LyricsPanel() {
         title: song.title,
         section: section.label,
         text: section.text,
+        position: song.position ?? "top",
+        fontScale: song.fontScale,
+        background: song.background,
       });
     },
     [push, markUsed],
@@ -70,7 +103,15 @@ function LyricsPanel() {
       service.add({
         type: "song",
         label: `${song.title} - ${section.label}`,
-        song: { songId: song.id, title: song.title, section: section.label, text: section.text },
+        song: {
+          songId: song.id,
+          title: song.title,
+          section: section.label,
+          text: section.text,
+          position: song.position ?? "top",
+          fontScale: song.fontScale,
+          background: song.background,
+        },
       });
     },
     [service],
@@ -81,7 +122,51 @@ function LyricsPanel() {
     setSelectedSongId(song.id);
     setSelectedSectionId(song.sections[0]?.id ?? null);
     setEditing(true);
+    setShowPaste(true);
+    setPasteText("");
   }, [create]);
+
+  /* --- style changes apply live if this song is what's on screen ------------ */
+  const styleKey = selectedSong
+    ? `${selectedSong.position ?? "top"}|${selectedSong.fontScale ?? 1}|${selectedSong.background?.mediaId ?? ""}`
+    : "";
+  useEffect(() => {
+    if (!selectedSong || live.mode !== "song" || live.songId !== selectedSong.id) return;
+    push({
+      ...live,
+      position: selectedSong.position ?? "top",
+      fontScale: selectedSong.fontScale,
+      background: selectedSong.background,
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [styleKey]);
+
+  const chooseBackground = useCallback(
+    (song: Song, mediaId: string) => {
+      const item = backgroundChoices.find((i) => i.id === mediaId);
+      if (!item) {
+        update(song.id, { background: undefined });
+        return;
+      }
+      const background: StageBackground = {
+        mediaId: item.id,
+        src: item.source === "builtin" || item.source === "linked" ? item.url : undefined,
+        kind: item.kind === "video" ? "video" : "image",
+      };
+      update(song.id, { background });
+    },
+    [backgroundChoices, update],
+  );
+
+  const applyPaste = useCallback(
+    (song: Song, replace: boolean) => {
+      if (pastePreview.length === 0) return;
+      importSections(song.id, pastePreview, replace);
+      setPasteText("");
+      setShowPaste(false);
+    },
+    [pastePreview, importSections],
+  );
 
   /* --- keyboard shortcuts: Esc to blank, Up/Down to step sections -------- */
   useShortcuts({
@@ -267,6 +352,117 @@ function LyricsPanel() {
                   </button>
                 </div>
               </div>
+
+              {/* --- how this song looks on Output ------------------------------ */}
+              <div className="flex flex-wrap items-center gap-x-5 gap-y-2 rounded-lg border border-border bg-panel p-3 text-xs">
+                <div className="flex items-center gap-2">
+                  <span className="text-muted-foreground">Position</span>
+                  <div className="flex overflow-hidden rounded-md border border-border">
+                    {(["top", "center", "bottom"] as LyricsPosition[]).map((p) => (
+                      <button
+                        key={p}
+                        onClick={() => update(selectedSong.id, { position: p })}
+                        aria-pressed={(selectedSong.position ?? "top") === p}
+                        className={cn(
+                          "px-2.5 py-1 capitalize transition-colors",
+                          (selectedSong.position ?? "top") === p
+                            ? "bg-accent font-semibold text-accent-ink"
+                            : "text-muted-foreground hover:bg-panel-raised hover:text-foreground",
+                        )}
+                      >
+                        {p === "center" ? "Middle" : p}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <label className="flex items-center gap-2">
+                  <span className="text-muted-foreground">Size</span>
+                  <input
+                    type="range"
+                    min={0.5}
+                    max={1.6}
+                    step={0.05}
+                    value={selectedSong.fontScale ?? 1}
+                    onChange={(e) => update(selectedSong.id, { fontScale: Number(e.target.value) })}
+                    className="w-28 accent-[var(--accent)]"
+                  />
+                </label>
+                <label className="flex min-w-0 items-center gap-2">
+                  <span className="text-muted-foreground">Background</span>
+                  <select
+                    value={selectedSong.background?.mediaId ?? ""}
+                    onChange={(e) => chooseBackground(selectedSong, e.target.value)}
+                    className="max-w-48 truncate rounded-md border border-input bg-background px-2 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-ring"
+                  >
+                    <option value="">None (black)</option>
+                    {backgroundChoices.map((item) => (
+                      <option key={item.id} value={item.id}>
+                        {item.kind === "video" ? "Video: " : ""}
+                        {item.name}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                {backgroundChoices.length <= 5 ? (
+                  <span className="text-[11px] text-muted-foreground">
+                    Add videos/images in the Media tab and they show up here.
+                  </span>
+                ) : null}
+              </div>
+
+              {editing ? (
+                <div className="flex flex-col gap-2 rounded-lg border border-dashed border-border p-3">
+                  <button
+                    onClick={() => setShowPaste((v) => !v)}
+                    className="flex items-center gap-1.5 self-start text-xs font-medium text-foreground hover:text-accent"
+                  >
+                    <ClipboardPaste className="h-3.5 w-3.5" />
+                    Paste full lyrics {showPaste ? "(hide)" : ""}
+                  </button>
+                  {showPaste ? (
+                    <>
+                      <textarea
+                        value={pasteText}
+                        onChange={(e) => setPasteText(e.target.value)}
+                        rows={8}
+                        placeholder={"Paste the whole song here.\nBlank line = new slide. [Chorus] / Verse 2: lines are used as labels."}
+                        className="w-full resize-y rounded-md border border-input bg-background p-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+                      />
+                      <div className="flex flex-wrap items-center gap-2 text-xs">
+                        <select
+                          value={splitMode}
+                          onChange={(e) => setSplitMode(e.target.value as SplitMode)}
+                          className="rounded-md border border-input bg-background px-2 py-1 focus:outline-none focus:ring-2 focus:ring-ring"
+                        >
+                          <option value="auto">Auto (blank lines, else every line)</option>
+                          <option value="blocks">Split on blank lines</option>
+                          <option value="lines">One line per slide</option>
+                          <option value="pairs">Two lines per slide</option>
+                        </select>
+                        <span className="text-muted-foreground">
+                          {pastePreview.length} slide{pastePreview.length === 1 ? "" : "s"}
+                        </span>
+                        <div className="ml-auto flex gap-2">
+                          <button
+                            onClick={() => applyPaste(selectedSong, false)}
+                            disabled={pastePreview.length === 0}
+                            className="rounded-md bg-accent px-3 py-1 font-semibold text-accent-ink disabled:opacity-40"
+                          >
+                            Add slides
+                          </button>
+                          <button
+                            onClick={() => applyPaste(selectedSong, true)}
+                            disabled={pastePreview.length === 0}
+                            className="rounded-md border border-border bg-panel px-3 py-1 text-foreground hover:bg-panel-raised disabled:opacity-40"
+                          >
+                            Replace all
+                          </button>
+                        </div>
+                      </div>
+                    </>
+                  ) : null}
+                </div>
+              ) : null}
 
               <div className="flex flex-col gap-2">
                 {selectedSong.sections.map((section) => {

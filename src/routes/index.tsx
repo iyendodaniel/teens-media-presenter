@@ -30,10 +30,10 @@ import { buildSuggestions, type Suggestion } from "@/lib/search-suggestions";
 import {
   useMediaLibrary,
   useMediaUrl,
-  useResolvedUrl,
   useService,
 } from "@/hooks/use-media-library";
 import { MediaStage } from "@/components/media/media-stage";
+import { StageBackgroundLayer } from "@/components/stage-background";
 import type { MediaItem } from "@/lib/media-library";
 import { previewVerseFontSize } from "@/lib/verse-font-size";
 import { getVerseText } from "@/lib/get-verse-text";
@@ -69,7 +69,13 @@ export const Route = createFileRoute("/")({
 function PreviewStage({ live }: { live: LiveState }) {
   const background =
     live.mode === "scripture" || live.mode === "song" ? live.background : undefined;
-  const backgroundUrl = useResolvedUrl(background?.mediaId, background?.src);
+  const songPosition = live.mode === "song" ? (live.position ?? "top") : "center";
+  const songJustify =
+    songPosition === "top"
+      ? "justify-start"
+      : songPosition === "bottom"
+        ? "justify-end"
+        : "justify-center";
 
   if (live.mode === "image" || live.mode === "video") {
     return (
@@ -85,20 +91,13 @@ function PreviewStage({ live }: { live: LiveState }) {
       style={{ containerType: "inline-size" }}
     >
       {live.mode === "scripture" || live.mode === "song" ? (
+        <StageBackgroundLayer background={background} dim={live.mode === "song" ? 0.3 : 0.55} />
+      ) : null}
+      {live.mode === "scripture" || live.mode === "song" ? (
         <div
           key={live.revision}
-          className="stage-fade-enter absolute inset-0 flex flex-col items-center justify-center gap-[3cqw] px-[6cqw] py-[6cqw] text-center"
+          className={`stage-fade-enter absolute inset-0 flex flex-col items-center gap-[3cqw] px-[6cqw] py-[6cqw] text-center ${songJustify}`}
         >
-          {backgroundUrl ? (
-            <>
-              <img
-                src={backgroundUrl}
-                alt=""
-                className="absolute inset-0 h-full w-full object-cover"
-              />
-              <div className="absolute inset-0 bg-black/55" />
-            </>
-          ) : null}
           <div className="relative z-10 flex flex-col items-center gap-[3cqw]">
             <p
               className="max-w-[92%] whitespace-pre-line font-medium leading-[1.35] text-foreground"
@@ -112,26 +111,17 @@ function PreviewStage({ live }: { live: LiveState }) {
             >
               {live.text}
             </p>
-            <p
-              className="font-display text-accent"
-              style={{ fontSize: "clamp(0.55rem, 2cqw, 1.1rem)", letterSpacing: "0.04em" }}
-            >
-              {live.mode === "scripture" ? (
-                <>
-                  {live.reference}
-                  <span className="ml-2 align-middle text-[0.6em] text-accent-dim">
-                    {live.translation}
-                  </span>
-                </>
-              ) : (
-                <>
-                  {live.title}
-                  <span className="ml-2 align-middle text-[0.6em] text-accent-dim">
-                    {live.section}
-                  </span>
-                </>
-              )}
-            </p>
+            {live.mode === "scripture" ? (
+              <p
+                className="font-display text-accent"
+                style={{ fontSize: "clamp(0.55rem, 2cqw, 1.1rem)", letterSpacing: "0.04em" }}
+              >
+                {live.reference}
+                <span className="ml-2 align-middle text-[0.6em] text-accent-dim">
+                  {live.translation}
+                </span>
+              </p>
+            ) : null}
           </div>
         </div>
       ) : (

@@ -28,12 +28,12 @@ import { useShortcuts } from "@/hooks/use-shortcuts";
 import {
   useMediaLibrary,
   useMediaUrl,
-  useResolvedUrl,
   useService,
 } from "@/hooks/use-media-library";
 import { useFolderLibrary } from "@/hooks/use-folder-library";
 import { useSplitRatio } from "@/hooks/use-split-ratio";
 import { MediaStage, fitClass } from "@/components/media/media-stage";
+import { StageBackgroundLayer } from "@/components/stage-background";
 import {
   createLinkedItem,
   formatDuration,
@@ -1447,24 +1447,23 @@ function LiveMirror({
 }) {
   const background =
     live.mode === "scripture" || live.mode === "song" ? live.background : undefined;
-  const backgroundUrl = useResolvedUrl(background?.mediaId, background?.src);
+  const songPosition = live.mode === "song" ? (live.position ?? "top") : "center";
+  const songJustify =
+    songPosition === "top"
+      ? "justify-start"
+      : songPosition === "bottom"
+        ? "justify-end"
+        : "justify-center";
 
   if (live.mode === "image" || live.mode === "video") {
     return <MediaStage state={live} forceMuted onTime={onTime} />;
   }
   if (live.mode === "scripture" || live.mode === "song") {
     return (
-      <div className="relative flex h-full w-full flex-col items-center justify-center gap-[3cqw] px-[6cqw] py-[6cqw] text-center">
-        {backgroundUrl ? (
-          <>
-            <img
-              src={backgroundUrl}
-              alt=""
-              className="absolute inset-0 h-full w-full object-cover"
-            />
-            <div className="absolute inset-0 bg-black/55" />
-          </>
-        ) : null}
+      <div
+        className={`relative flex h-full w-full flex-col items-center gap-[3cqw] px-[6cqw] py-[6cqw] text-center ${songJustify}`}
+      >
+        <StageBackgroundLayer background={background} dim={live.mode === "song" ? 0.3 : 0.55} />
         <p
           className="relative z-10 max-w-[92%] whitespace-pre-line font-medium leading-[1.35] text-foreground"
           style={{
@@ -1474,12 +1473,14 @@ function LiveMirror({
         >
           {live.text}
         </p>
-        <p
-          className="relative z-10 font-display text-accent"
-          style={{ fontSize: "clamp(0.55rem, 2cqw, 1.1rem)", letterSpacing: "0.04em" }}
-        >
-          {live.mode === "scripture" ? live.reference : `${live.title} - ${live.section}`}
-        </p>
+        {live.mode === "scripture" ? (
+          <p
+            className="relative z-10 font-display text-accent"
+            style={{ fontSize: "clamp(0.55rem, 2cqw, 1.1rem)", letterSpacing: "0.04em" }}
+          >
+            {live.reference}
+          </p>
+        ) : null}
       </div>
     );
   }

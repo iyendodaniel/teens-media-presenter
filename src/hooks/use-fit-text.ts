@@ -21,7 +21,7 @@ import { useLayoutEffect, useRef, useState } from "react";
 export function useFitText<
   TContainer extends HTMLElement = HTMLDivElement,
   TContent extends HTMLElement = HTMLDivElement,
->(deps: unknown[]) {
+>(deps: unknown[], maxScale = Infinity) {
   const containerRef = useRef<TContainer>(null);
   const contentRef = useRef<TContent>(null);
   const [scale, setScale] = useState(1);
@@ -51,7 +51,9 @@ export function useFitText<
       // the very edge of the projected area. No upper cap here anymore -
       // whichever axis (width or height) runs out of room first still bounds
       // it, so it can grow to fill the screen without ever overflowing.
-      const next = Math.min(availW / naturalW, availH / naturalH) * 0.98;
+      // maxScale: lyrics captions pass 1 so they only ever shrink to fit,
+      // never grow to fill the screen the way a scripture verse does.
+      const next = Math.min(Math.min(availW / naturalW, availH / naturalH) * 0.98, maxScale);
       setScale(Number.isFinite(next) && next > 0 ? next : 1);
     };
 

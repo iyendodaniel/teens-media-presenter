@@ -10,7 +10,7 @@
  * their src from the media library by id, same as everywhere else).
  */
 
-import type { LiveState, Translation } from "./presenter-sync";
+import type { LiveState, LyricsPosition, StageBackground, Translation } from "./presenter-sync";
 
 export type ServiceItemType = "scripture" | "song" | "image" | "video" | "gif" | "note";
 
@@ -28,6 +28,9 @@ export type ServiceSongData = {
   title: string;
   section: string;
   text: string;
+  position?: LyricsPosition | undefined;
+  fontScale?: number | undefined;
+  background?: StageBackground | undefined;
 };
 
 export type ServiceItem = {
@@ -97,6 +100,9 @@ export function liveStateForServiceItem(
       title: item.song.title,
       section: item.song.section,
       text: item.song.text,
+      position: item.song.position,
+      fontScale: item.song.fontScale,
+      background: item.song.background,
     };
   }
   if ((item.type === "image" || item.type === "video" || item.type === "gif") && item.mediaId) {

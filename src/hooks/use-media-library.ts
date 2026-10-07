@@ -285,5 +285,30 @@ export function useSongs() {
     saveSongs(next);
   }, []);
 
-  return { songs, create, update, remove, markUsed, addSection, updateSection, removeSection };
+  /** Bulk-add sections (from the paste-lyrics box). Replaces the lone empty placeholder verse if that's all there is. */
+  const importSections = useCallback(
+    (songId: string, parts: Array<{ label: string; text: string }>, replace: boolean) => {
+      const made: SongSection[] = parts.map((p) => ({ ...newSongSection(p.label), text: p.text }));
+      const next = loadSongs().map((s) => {
+        if (s.id !== songId) return s;
+        const onlyEmpty = s.sections.every((sec) => !sec.text.trim());
+        return { ...s, sections: replace || onlyEmpty ? made : [...s.sections, ...made] };
+      });
+      setSongs(next);
+      saveSongs(next);
+    },
+    [],
+  );
+
+  return {
+    songs,
+    create,
+    update,
+    remove,
+    markUsed,
+    addSection,
+    updateSection,
+    removeSection,
+    importSections,
+  };
 }

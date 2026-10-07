@@ -18,6 +18,16 @@ export const LICENSED_TRANSLATIONS = new Set<Translation>(["NIV", "MSG", "AMP", 
 
 export type MediaFitMode = "fit" | "fill" | "center";
 
+/** Where lyrics sit on the Output screen. "top"/"bottom" behave like captions. */
+export type LyricsPosition = "top" | "center" | "bottom";
+
+/** Image OR video layered behind scripture/lyrics text. `kind` defaults to image. */
+export type StageBackground = {
+  mediaId: string;
+  src?: string | undefined;
+  kind?: "image" | "video" | undefined;
+};
+
 export type ScriptureFontKey = "sans" | "serif" | "elegant" | "display";
 
 export const SCRIPTURE_FONTS: { key: ScriptureFontKey; label: string; family: string }[] = [
@@ -76,7 +86,7 @@ export type LiveState =
       text: string;
       translation: Translation;
       /** Optional background image behind the verse text. */
-      background?: { mediaId: string; src?: string | undefined } | undefined;
+      background?: StageBackground | undefined;
       /** Multiplier applied to the auto-fit verse font size. Defaults to 1. */
       fontScale?: number | undefined;
       /** Which of SCRIPTURE_FONTS to render the verse text in. Defaults to "sans". */
@@ -90,8 +100,10 @@ export type LiveState =
       /** Section label, e.g. "Verse 1", "Chorus". */
       section: string;
       text: string;
-      /** Optional background image behind the lyrics, same shape as scripture. */
-      background?: { mediaId: string; src?: string | undefined } | undefined;
+      /** Optional image or looping video behind the lyrics. */
+      background?: StageBackground | undefined;
+      /** Defaults to "top" (caption style). */
+      position?: LyricsPosition | undefined;
       fontScale?: number | undefined;
       fontFamily?: ScriptureFontKey | undefined;
     };
