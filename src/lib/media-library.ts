@@ -172,32 +172,54 @@ export async function videoMeta(
     video.preload = "metadata";
     video.muted = true;
     video.src = url;
-    const done = (result: { thumb?: string | undefined; duration?: number | undefined }) => {
-      video.removeAttribute("src");
-      resolve(result);
-    };
-    const timeout = window.setTimeout(() => done({}), 6000);
-    video.onloadeddata = () => {
-      const duration = Number.isFinite(video.duration) ? video.duration : undefined;
+
+    const grabFrame = (duration: number | undefined) => {
       try {
         const canvas = document.createElement("canvas");
         const scale = 320 / (video.videoWidth || 320);
         canvas.width = 320;
         canvas.height = Math.max(1, Math.round((video.videoHeight || 180) * scale));
         canvas.getContext("2d")?.drawImage(video, 0, 0, canvas.width, canvas.height);
-        window.clearTimeout(timeout);
-        done({ thumb: canvas.toDataURL("image/jpeg", 0.7), duration });
+        return canvas.toDataURL("image/jpeg", 0.7);
       } catch {
-        window.clearTimeout(timeout);
-        done({ duration });
+        return undefined;
+      }
+    };
+
+    const done = (result: { thumb?: string | undefined; duration?: number | undefined }) => {
+      video.removeAttribute("src");
+      resolve(result);
+    };
+    const timeout = window.setTimeout(() => done({}), 6000);
+
+    // Seeking to a moment past the very first frame gives a far more useful
+    // poster (frame 0 is very often a black/blank fade-in) - but the frame
+    // must only be grabbed once the browser has actually finished painting
+    // that seeked position. Grabbing on "loadeddata" instead (which can fire
+    // for the *pre-seek* frame at time 0, before the seek settles) is a race
+    // that intermittently produces solid-black thumbnails, especially when
+    // several videos are being read at once (e.g. the Folder tab's grid).
+    // Waiting for "seeked" avoids that race.
+    video.onloadedmetadata = () => {
+      const duration = Number.isFinite(video.duration) ? video.duration : undefined;
+      if (video.duration && video.duration > 0.2) {
+        video.currentTime = Math.min(0.5, video.duration / 4);
+        video.onseeked = () => {
+          window.clearTimeout(timeout);
+          done({ thumb: grabFrame(duration), duration });
+        };
+      } else {
+        // Too short to seek meaningfully - fall back to whatever the first
+        // frame gives us once it's actually available.
+        video.onloadeddata = () => {
+          window.clearTimeout(timeout);
+          done({ thumb: grabFrame(duration), duration });
+        };
       }
     };
     video.onerror = () => {
       window.clearTimeout(timeout);
       done({});
-    };
-    video.onloadedmetadata = () => {
-      if (video.duration && video.duration > 0.2) video.currentTime = 0.1;
     };
   });
 }

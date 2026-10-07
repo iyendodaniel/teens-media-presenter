@@ -235,27 +235,50 @@ function SelectedPreview({ item, fit }: { item: MediaItem; fit: MediaFitMode }) 
 /** Large thumbnail card for a folder entry - mirrors MediaThumb's grid look. */
 function FolderThumb({ entry, onSelect }: { entry: FolderEntry; onSelect: () => void }) {
   const [preview, setPreview] = useState<string | null>(null);
+  const [duration, setDuration] = useState<number | undefined>(undefined);
+  const [status, setStatus] = useState<"loading" | "ready" | "failed">("loading");
 
   useEffect(() => {
     let cancelled = false;
     let objectUrl: string | null = null;
+    setPreview(null);
+    setStatus("loading");
+
     if (entry.kind === "image" || entry.kind === "gif") {
-      void entry.handle.getFile().then((file) => {
-        if (cancelled) return;
-        objectUrl = URL.createObjectURL(file);
-        setPreview(objectUrl);
-      });
+      void entry.handle
+        .getFile()
+        .then((file) => {
+          if (cancelled) return;
+          objectUrl = URL.createObjectURL(file);
+          setPreview(objectUrl);
+          setStatus("ready");
+        })
+        .catch(() => {
+          if (!cancelled) setStatus("failed");
+        });
     } else if (entry.kind === "video") {
       // Same poster-frame grab used for imported videos (media-library.ts) -
       // read the file, load it into a hidden <video>, snapshot a frame.
       // Falls back to the Film icon below if it can't (unsupported codec etc).
-      void entry.handle.getFile().then(async (file) => {
-        if (cancelled) return;
-        const url = URL.createObjectURL(file);
-        const meta = await videoMeta(url);
-        URL.revokeObjectURL(url);
-        if (!cancelled && meta.thumb) setPreview(meta.thumb);
-      });
+      void entry.handle
+        .getFile()
+        .then(async (file) => {
+          if (cancelled) return;
+          const url = URL.createObjectURL(file);
+          const meta = await videoMeta(url);
+          URL.revokeObjectURL(url);
+          if (cancelled) return;
+          if (meta.thumb) {
+            setPreview(meta.thumb);
+            setDuration(meta.duration);
+            setStatus("ready");
+          } else {
+            setStatus("failed");
+          }
+        })
+        .catch(() => {
+          if (!cancelled) setStatus("failed");
+        });
     }
     return () => {
       cancelled = true;
@@ -273,15 +296,30 @@ function FolderThumb({ entry, onSelect }: { entry: FolderEntry; onSelect: () => 
         {preview ? (
           <img src={preview} alt="" className="h-full w-full object-cover" loading="lazy" />
         ) : (
-          <span className="text-muted-foreground">
+          <span
+            className={cn(
+              "flex flex-col items-center gap-1 text-muted-foreground",
+              status === "loading" && "animate-pulse",
+            )}
+          >
             {entry.kind === "video" ? (
               <Film className="h-6 w-6" />
             ) : (
               <ImageIcon className="h-6 w-6" />
             )}
+            {status === "loading" ? (
+              <span className="text-[9px] tracking-wide">Loading…</span>
+            ) : null}
           </span>
         )}
       </span>
+
+      {entry.kind === "video" && duration ? (
+        <span className="pointer-events-none absolute right-1.5 top-1.5 rounded bg-background/80 px-1.5 py-0.5 font-mono text-[10px] text-foreground">
+          {formatDuration(duration)}
+        </span>
+      ) : null}
+
       <span className="flex items-center gap-1.5 px-2 py-1.5">
         {entry.kind === "video" ? (
           <Film className="h-3 w-3 shrink-0 text-accent" />
@@ -1185,9 +1223,24 @@ function MediaPanel() {
               </span>
             </div>
             <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end">
-              <div className="aspect-video w-full max-w-md overflow-hidden rounded-md border border-border bg-stage">
+              <div className="relative aspect-video w-full max-w-md overflow-hidden rounded-md border border-border bg-stage">
                 {selected ? (
-                  <SelectedPreview item={selected} fit={fit} />
+                  <>
+                    <SelectedPreview item={selected} fit={fit} />
+                    <span className="pointer-events-none absolute left-1.5 top-1.5 flex items-center gap-1 rounded bg-background/85 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-foreground">
+                      {selected.kind === "video" ? (
+                        <Film className="h-3 w-3 text-accent" />
+                      ) : (
+                        <ImageIcon className="h-3 w-3 text-muted-foreground" />
+                      )}
+                      {selected.kind === "video" ? "Video" : selected.kind === "gif" ? "GIF" : "Image"}
+                    </span>
+                    {selected.kind === "video" && selected.duration ? (
+                      <span className="pointer-events-none absolute right-1.5 top-1.5 rounded bg-background/80 px-1.5 py-0.5 font-mono text-[10px] text-foreground">
+                        {formatDuration(selected.duration)}
+                      </span>
+                    ) : null}
+                  </>
                 ) : (
                   <div className="flex h-full items-center justify-center text-xs text-muted-foreground">
                     Pick media on the left, or press M to search
