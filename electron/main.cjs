@@ -3,7 +3,7 @@
 // What this does, end to end:
 //   1. On launch, spawns the app's own built web server (the same one
 //      `npm run build` + `node .output/server/index.mjs` produces) on a
-//      free local port. We spawn it with Electron's binary running in
+//      local port. We spawn it with Electron's binary running in
 //      "plain Node" mode (ELECTRON_RUN_AS_NODE=1) so we don't need a
 //      separate Node.js install on the user's machine.
 //   2. Opens two windows once the server responds: the Control Panel
@@ -64,6 +64,29 @@ function getFreePort() {
   });
 }
 
+// The app's saved data (songs, imported media, folder choice) lives in the
+// browser storage for ONE address: http://localhost:<port>. A random port on
+// every launch meant a brand-new, empty address every time - so nothing
+// ever "saved". Using the same port each launch keeps the address (and the
+// data) stable.
+const PREFERRED_PORT = 38417;
+
+function isPortFree(port) {
+  return new Promise((resolve) => {
+    const srv = net.createServer();
+    srv.unref();
+    srv.once("error", () => resolve(false));
+    srv.listen(port, "127.0.0.1", () => srv.close(() => resolve(true)));
+  });
+}
+
+// If something else is already using the preferred port, fall back to a
+// random one so the app still opens (saved data just won't carry over then).
+async function pickPort() {
+  if (await isPortFree(PREFERRED_PORT)) return PREFERRED_PORT;
+  return getFreePort();
+}
+
 function waitForServer(port, timeoutMs = 20000) {
   const startedAt = Date.now();
   return new Promise((resolve, reject) => {
@@ -94,7 +117,7 @@ async function startServer() {
     );
   }
 
-  serverPort = await getFreePort();
+  serverPort = await pickPort();
 
   serverProcess = spawn(process.execPath, [entry], {
     env: {
